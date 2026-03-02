@@ -1,6 +1,6 @@
-# MoshiMoshiBosai
+# もしもし防災
 
-このリポジトリは、学内ハッカソンで作成された「MoshiMoshiBosai」のソースコードです。
+このリポジトリは、学内ハッカソンで作成された「もしもし防災」のソースコードです。
 
 ## ハッカソン概要
 
@@ -35,7 +35,7 @@
 ![16](Presentation/16.png)
 ![17](Presentation/17.png)
 
-<video src="Presentation/18.mp4" controls="controls" width="100%"></video>
+[デモ動画を再生する](Presentation/18.mp4)
 
 ![19](Presentation/19.png)
 ![20](Presentation/20.png)
