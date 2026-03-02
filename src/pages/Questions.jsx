@@ -1,0 +1,368 @@
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { QUESTIONS } from '../data/questions';
+import { ChevronRight } from 'lucide-react';
+
+export default function Questions() {
+    const { roomId } = useParams();
+    const navigate = useNavigate();
+
+    const currentUser = useMemo(() => {
+        try {
+            return JSON.parse(localStorage.getItem('currentUser')) || {};
+        } catch {
+            return {};
+        }
+    }, []);
+
+    // ルームの属性を取得（ルーム作成者のみが設定、全ユーザー共有）
+    const [roomAttributes, setRoomAttributes] = useState(null);
+    useEffect(() => {
+        const fetchRoom = async () => {
+            try {
+                const roomDoc = await getDoc(doc(db, 'rooms', roomId));
+                if (roomDoc.exists()) {
+                    setRoomAttributes(roomDoc.data().attributes || {});
+                }
+            } catch (err) {
+                console.error('Room fetch error:', err);
+            }
+        };
+        fetchRoom();
+    }, [roomId]);
+
+    const filteredQuestions = useMemo(() => {
+        // ルーム属性をベースに、ユーザーの属性もマージ
+        const attrs = { ...(roomAttributes || {}), ...(currentUser.attributes || {}) };
+        return QUESTIONS.filter((q) => {
+            if (q.targetAttribute === 'all') return true;
+            // otherText は文字列なので truthy チェック、他は boolean
+            const val = attrs[q.targetAttribute];
+            return q.targetAttribute === 'otherText' ? !!val && val.trim().length > 0 : val === true;
+        });
+    }, [currentUser, roomAttributes]);
+
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [answers, setAnswers] = useState({});
+    const [memos, setMemos] = useState({});
+    const [saving, setSaving] = useState(false);
+    const [showCopied, setShowCopied] = useState(false);
+    const [dragOffset, setDragOffset] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const [slideWidth, setSlideWidth] = useState(0);
+
+    const totalQuestions = filteredQuestions.length;
+    const totalSlides = totalQuestions + 1; // +1 for completion slide
+
+    // Refs（イベントハンドラ内で常に最新値を参照するため）
+    const containerRef = useRef(null);
+    const touchStartX = useRef(0);
+    const touchStartY = useRef(0);
+    const isHorizontalSwipe = useRef(null);
+    const isDraggingRef = useRef(false);
+    const dragOffsetRef = useRef(0);
+    const currentIndexRef = useRef(0);
+
+    // state → ref 同期
+    useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+
+    const resolveQuestionText = (text) => {
+        if (!text) return '';
+        let resolved = text.replace(/\{prevAnswer:(\w+)\}/g, (_, qId) => {
+            return answers[qId] || '___';
+        });
+        resolved = resolved.replace(/\{location\}/g, currentUser.location || '___');
+        resolved = resolved.replace(/\{otherText\}/g, currentUser.attributes?.otherText || '___');
+        return resolved;
+    };
+
+    // ---------- コンテナ幅の計測 ----------
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const measure = () => setSlideWidth(el.offsetWidth);
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    // ---------- ネイティブタッチ＋マウスイベント ----------
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+
+        // --- 共通ドラッグロジック ---
+        const startDrag = (x, y) => {
+            touchStartX.current = x;
+            touchStartY.current = y;
+            isHorizontalSwipe.current = null;
+            isDraggingRef.current = true;
+            setIsDragging(true);
+        };
+
+        const moveDrag = (x, y, prevent) => {
+            if (!isDraggingRef.current) return;
+            const dx = x - touchStartX.current;
+            const dy = y - touchStartY.current;
+
+            // 最初の数px で縦/横を判定してロック
+            if (isHorizontalSwipe.current === null) {
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                    isHorizontalSwipe.current = Math.abs(dx) > Math.abs(dy);
+                }
+                return;
+            }
+            if (!isHorizontalSwipe.current) return;
+            if (prevent) prevent(); // 横スワイプ時は縦スクロールを防止
+
+            const idx = currentIndexRef.current;
+            let offset = dx;
+            // 端での抵抗感
+            if ((idx === 0 && dx > 0) || (idx >= totalSlides - 1 && dx < 0)) {
+                offset = dx * 0.25;
+            }
+            dragOffsetRef.current = offset;
+            setDragOffset(offset);
+        };
+
+        const endDrag = () => {
+            if (!isDraggingRef.current) return;
+            isDraggingRef.current = false;
+            setIsDragging(false);
+            isHorizontalSwipe.current = null;
+
+            const offset = dragOffsetRef.current;
+            const idx = currentIndexRef.current;
+            if (offset < -50 && idx < totalSlides - 1) {
+                setCurrentIndex((p) => p + 1);
+            } else if (offset > 50 && idx > 0) {
+                setCurrentIndex((p) => p - 1);
+            }
+            dragOffsetRef.current = 0;
+            setDragOffset(0);
+        };
+
+        // --- タッチ ---
+        const onTS = (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY);
+        const onTM = (e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault());
+        const onTE = () => endDrag();
+
+        // --- マウス（PC）---
+        const onMD = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            e.preventDefault();
+            startDrag(e.clientX, e.clientY);
+        };
+        const onMM = (e) => { if (isDraggingRef.current) moveDrag(e.clientX, e.clientY); };
+        const onMU = () => endDrag();
+
+        el.addEventListener('touchstart', onTS, { passive: true });
+        el.addEventListener('touchmove', onTM, { passive: false });
+        el.addEventListener('touchend', onTE, { passive: true });
+        el.addEventListener('mousedown', onMD);
+        el.addEventListener('mousemove', onMM);
+        el.addEventListener('mouseup', onMU);
+        el.addEventListener('mouseleave', onMU);
+
+        return () => {
+            el.removeEventListener('touchstart', onTS);
+            el.removeEventListener('touchmove', onTM);
+            el.removeEventListener('touchend', onTE);
+            el.removeEventListener('mousedown', onMD);
+            el.removeEventListener('mousemove', onMM);
+            el.removeEventListener('mouseup', onMU);
+            el.removeEventListener('mouseleave', onMU);
+        };
+    }, [totalSlides]);
+
+    // ---------- ナビゲーション ----------
+    const goNext = () => {
+        if (currentIndex < totalSlides - 1) setCurrentIndex((p) => p + 1);
+    };
+    const goPrev = () => {
+        if (currentIndex > 0) setCurrentIndex((p) => p - 1);
+    };
+
+    const handleAnswerChange = (qId, val) => setAnswers((p) => ({ ...p, [qId]: val }));
+    const handleMemoChange = (qId, val) => setMemos((p) => ({ ...p, [qId]: val }));
+
+    // ---------- 共有 ----------
+    const handleShare = async () => {
+        const shareUrl = `${window.location.origin}/join/${roomId}`;
+        if (navigator.share) {
+            try { await navigator.share({ title: 'もしもし防災', url: shareUrl }); return; } catch { /* cancelled */ }
+        }
+        try { await navigator.clipboard.writeText(shareUrl); } catch {
+            const i = document.createElement('input'); i.value = shareUrl;
+            document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
+        }
+        setShowCopied(true);
+        setTimeout(() => setShowCopied(false), 2000);
+    };
+
+    // ---------- 保存＆遷移 ----------
+    const handleSaveAndNavigate = async () => {
+        setSaving(true);
+        try {
+            const userId = currentUser.id;
+            await Promise.all(filteredQuestions.map((q) => {
+                const aid = `${roomId}_${userId}_${q.id}`;
+                return setDoc(doc(collection(db, 'answers'), aid), {
+                    id: aid, roomId, userId, questionId: q.id,
+                    answerText: answers[q.id] || '', memoText: memos[q.id] || '',
+                });
+            }));
+            navigate(`/room/${roomId}/summary`);
+        } catch (err) {
+            console.error('回答保存エラー:', err);
+            alert('回答の保存に失敗しました。');
+        } finally { setSaving(false); }
+    };
+
+    // ---------- 描画用の値 ----------
+    const PEEK = 24;     // 左右のカードがチラ見えする幅
+    const CARD_GAP = 12; // カード間のスキマ
+    const cardWidth = slideWidth ? slideWidth - (2 * PEEK) : 0;
+    const stepSize = cardWidth + CARD_GAP;
+    const trackPx = PEEK - (currentIndex * stepSize) + dragOffset;
+    const isOnCompletion = currentIndex >= totalQuestions;
+    const progress = isOnCompletion ? 100 : ((currentIndex + 1) / totalQuestions) * 100;
+    const dispIdx = isOnCompletion ? String(totalQuestions).padStart(2, '0') : String(currentIndex + 1).padStart(2, '0');
+    const dispTot = String(totalQuestions).padStart(2, '0');
+
+    return (
+        <div
+            className="h-screen flex flex-col overflow-hidden"
+            style={{
+                backgroundColor: isOnCompletion ? '#FE7833' : '#F5F5F5',
+                transition: 'background-color 0.4s ease',
+            }}
+        >
+            {/* ヘッダー */}
+            <div className="flex items-center justify-between px-5 pt-10 pb-3 flex-shrink-0">
+                <div />
+                <button type="button" onClick={handleShare}
+                    className={`flex items-center gap-1 rounded-full px-3 h-9 text-[16px] font-medium active:scale-95 transition-all ${isOnCompletion ? 'bg-white text-[#8D8D8D] hover:bg-white/90' : 'bg-[#8D8D8D] text-white hover:bg-[#7a7a7a]'}`}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                        <polyline points="16 6 12 2 8 6" />
+                        <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                    {showCopied ? 'コピー済み' : '共有'}
+                </button>
+            </div>
+
+            {/* ===== カルーセル ===== */}
+            <div ref={containerRef} className="flex-1 overflow-hidden min-h-0">
+                <div
+                    className="h-full flex"
+                    style={{
+                        transform: `translate3d(${trackPx}px, 0, 0)`,
+                        transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)',
+                        willChange: 'transform',
+                        gap: `${CARD_GAP}px`,
+                    }}
+                >
+                    {/* 質問カード群 */}
+                    {filteredQuestions.map((question, index) => {
+                        const qText = resolveQuestionText(question.text || '質問文が設定されていません');
+                        return (
+                            <div key={question.id}
+                                className="h-full flex-shrink-0 flex flex-col pb-2 pt-2"
+                                style={{ width: cardWidth || 'calc(100vw - 48px)' }}>
+                                <div className={`flex-1 rounded-[20px] p-5 flex flex-col shadow-xl overflow-hidden min-h-0 ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#0EB09F]' : 'bg-[#137FDE]'}`}>
+                                    <div className="mb-4">
+                                        <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
+                                            {String(index + 1).padStart(2, '0')}/{dispTot}
+                                        </span>
+                                    </div>
+                                    <h2 className="text-[20px] font-bold text-white leading-relaxed mb-5 whitespace-pre-line flex-shrink-0">
+                                        {qText}
+                                    </h2>
+                                    <input
+                                        type="text"
+                                        value={answers[question.id] || ''}
+                                        onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                                        placeholder={question.placeholder}
+                                        className="w-full px-4 py-3 rounded-xl bg-[#F9F9F9] text-[#484848] placeholder-[#CDCDCD] text-[16px] font-medium focus:outline-none transition-all mb-4"
+                                    />
+                                    <div className={`flex-1 rounded-xl p-4 flex flex-col min-h-[80px] ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#1F685D]' : 'bg-[#123C4B]'}`}>
+                                        <p className={`text-xs mb-1 ${question.id === 'q3' || question.id === 'q4' ? 'text-[#0EB09F]/50' : 'text-[#137FDE]/50'}`}>メモ用欄</p>
+                                        <textarea
+                                            value={memos[question.id] || ''}
+                                            onChange={(e) => handleMemoChange(question.id, e.target.value)}
+                                            placeholder={question.memo}
+                                            rows={3}
+                                            className={`w-full flex-1 bg-transparent text-sm focus:outline-none resize-none ${question.id === 'q3' || question.id === 'q4' ? 'text-[#0EB09F] placeholder-[#0EB09F]/30' : 'text-[#137FDE] placeholder-[#137FDE]/30'}`}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* 完了スライド */}
+                    <div className="h-full flex-shrink-0 flex flex-col items-center justify-center px-6 text-center"
+                        style={{ width: cardWidth || 'calc(100vw - 48px)' }}>
+                        <div className="mb-4">
+                            <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
+                                {dispTot}/{dispTot}
+                            </span>
+                        </div>
+                        <h1 className="text-2xl font-bold text-white leading-relaxed mb-4">
+                            お疲れ様でした！
+                            <br />
+                            全{totalQuestions}問の回答が完了しました。
+                        </h1>
+                        <p className="text-white/80 text-sm leading-relaxed mb-8">
+                            あなたが考えた「もしも」の備えを、家族の回答と突き合わせてみましょう。意外なズレが見つかるかもしれません。
+                        </p>
+                        <img src="/Group_88.png" alt="完了" className="w-full max-w-xs object-contain mb-8" />
+                    </div>
+                </div>
+            </div>
+
+            {/* ドットインジケーター + 下部ボタン */}
+            <div className="px-5 pb-4 pt-2 flex-shrink-0">
+                {/* ドット */}
+                <div className="flex justify-center items-center gap-2 mb-4">
+                    {filteredQuestions.map((_, i) => (
+                        <div
+                            key={i}
+                            className="rounded-full transition-all"
+                            style={{
+                                width: i === currentIndex && !isOnCompletion ? '24px' : '8px',
+                                height: '8px',
+                                backgroundColor: i === currentIndex && !isOnCompletion ? '#137FDE' : '#C5C5C5',
+                            }}
+                        />
+                    ))}
+                </div>
+                <button
+                    type="button"
+                    onClick={isOnCompletion ? handleSaveAndNavigate : goNext}
+                    disabled={isOnCompletion && saving}
+                    className={`w-full h-[46px] rounded-full font-bold text-[20px] shadow-[0_0_11.5px_0_rgba(93,93,93,0.50)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${isOnCompletion
+                        ? 'bg-[#F9F9F9] text-[#FE7833] hover:opacity-90'
+                        : 'bg-[#F9F9F9] text-[#137FDE] hover:opacity-90'
+                        }`}
+                >
+                    {isOnCompletion
+                        ? (saving ? '保存中...' : '家族の回答と比較する')
+                        : (currentIndex < totalQuestions - 1 ? '次へ' : '回答を完了する')}
+                    {!isOnCompletion && <ChevronRight className="w-5 h-5" />}
+                </button>
+            </div>
+
+            {/* コピー通知 */}
+            {showCopied && (
+                <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-white rounded-full shadow-lg text-sm font-bold text-[#137FDE] animate-[fadeInUp_0.2s_ease-out]">
+                    リンクをコピーしました！
+                </div>
+            )}
+        </div>
+    );
+}

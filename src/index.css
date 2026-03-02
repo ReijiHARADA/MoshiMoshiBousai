@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+html,
+body {
+    background-color: #F5F5F5;
+    margin: 0;
+    padding: 0;
+    overscroll-behavior-y: none;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== 印刷用スタイル ===== */
+@media print {
+
+    /* 印刷時に不要な要素を非表示 */
+    body>* {
+        visibility: hidden;
+    }
+
+    .sheet-modal {
+        visibility: visible;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: white;
+    }
+
+    .sheet-modal .no-print {
+        display: none !important;
+    }
+
+    .sheet-modal * {
+        visibility: visible;
+    }
+
+    @page {
+        size: A4 landscape;
+        margin: 10mm;
+    }
+}
