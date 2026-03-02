@@ -35,7 +35,7 @@
 ![16](Presentation/16.png)
 ![17](Presentation/17.png)
 
-[デモ動画を再生する](Presentation/18.mp4)
+https://github.com/user-attachments/assets/0b7dd246-20d4-43d3-b608-b9a2548dd19c
 
 ![19](Presentation/19.png)
 ![20](Presentation/20.png)
