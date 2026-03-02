@@ -1,16 +1,41 @@
-# React + Vite
+# MoshiMoshiBosai
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+このリポジトリは、学内ハッカソンで作成された「MoshiMoshiBosai」のソースコードです。
 
-Currently, two official plugins are available:
+## ハッカソン概要
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **大会名**: 学内ハッカソン（主催: しばよこ）
+- **テーマ**: 「ちょっとしたズレ」
+- **協賛企業**:
+  - チームラボ株式会社 様
+  - GMOメディア株式会社 様
+  - 株式会社サイバーエージェント 様
+  - 株式会社グッドパッチ 様
+- **参加人数**: 全12チーム、計52人
+- **当チームの人数**: 4人
+- **実績**: 🏆 最優秀賞
 
-## React Compiler
+## 発表資料
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+![01](Presentation/01.png)
+![02](Presentation/02.png)
+![03](Presentation/03.png)
+![04](Presentation/04.png)
+![05](Presentation/05.png)
+![06](Presentation/06.png)
+![07](Presentation/07.png)
+![08](Presentation/08.png)
+![09](Presentation/09.png)
+![10](Presentation/10.png)
+![11](Presentation/11.png)
+![12](Presentation/12.png)
+![13](Presentation/13.png)
+![14](Presentation/14.png)
+![15](Presentation/15.png)
+![16](Presentation/16.png)
+![17](Presentation/17.png)
 
-## Expanding the ESLint configuration
+<video src="Presentation/18.mp4" controls="controls" width="100%"></video>
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+![19](Presentation/19.png)
+![20](Presentation/20.png)
