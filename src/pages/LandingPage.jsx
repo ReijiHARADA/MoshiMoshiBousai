@@ -34,9 +34,13 @@ const STEPS = [
     },
 ];
 
-export default function LandingPage() {
+export default function LandingPage({ onCTA }) {
     const handleCTA = () => {
-        window.location.href = '/';
+        if (onCTA) {
+            onCTA();
+        } else {
+            window.location.href = '/';
+        }
     };
 
     return (

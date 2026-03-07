@@ -4,6 +4,7 @@ import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { MapPin, BadgeCheck, Info, Share } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import LandingPage from './LandingPage';
 
 function generateRoomId() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -142,21 +143,14 @@ export default function Home() {
         { key: 'hasDisability', label: '障害をもった方' },
     ];
 
-    return (
-        <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center py-10 px-5">
-            <div className="w-full max-w-[402px]">
-                {/* ヘッダー部分 */}
-                <div className="mb-6">
-                    <h1 className="text-[#137FDE] font-black text-[32px] leading-tight mb-2">
-                        もしもし防災へ
-                        <br />
-                        ようこそ！
-                    </h1>
-                    <p className="text-[#484848] text-[14px] leading-[1.4] opacity-80 text-justify">
-                        もしも防災では、避難場所や連絡手段など家族の中にある被災時の認識のずれを可視化し、修正することができます。
-                    </p>
-                </div>
+    const handleScrollToForm = () => {
+        document.getElementById('home-form')?.scrollIntoView({ behavior: 'smooth' });
+    };
 
+    return (
+        <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center">
+            <LandingPage onCTA={handleScrollToForm} />
+            <div id="home-form" className="w-full max-w-[402px] px-5 py-10">
                 {/* メインカード（青） ※ <form> タグは使わない */}
                 <div className="bg-[#137FDE] rounded-[20px] px-7 py-7 flex flex-col gap-6">
                     <h2 className="text-[#F9F9F9] font-bold text-[24px]">
