@@ -127,6 +127,7 @@
   margin-bottom: 120px;
   pointer-events: none;
   justify-self: stretch;
+  z-index: 1;
 }
 
 /* mockup: town の手前 (DOM順2番目) */
@@ -134,11 +135,12 @@
   width: 260px;
   margin-bottom: -70px;
   align-self: start;
+  z-index: 2;
+  transition: transform 0.3s ease;
 }
 
-.lp-hero__mockup:hover {
+.lp-hero__stack:has(.lp-hero__cta:hover) .lp-hero__mockup {
   transform: translateY(-30px);
-  transition: transform 0.3s ease;
 }
 
 .lp-hero__mockup img {
@@ -154,6 +156,7 @@
   height: 55%;
   margin-bottom: -80px;
   pointer-events: none;
+  z-index: 3;
   background: linear-gradient(
     to bottom,
     rgba(245, 245, 245, 0) 0%,
@@ -166,6 +169,7 @@
 .lp-hero__cta {
   align-self: end;
   position: relative;
+  z-index: 4;
 }
 
 /* ---------- CTA Button ---------- */
@@ -210,4 +214,102 @@ button.lp-hero__cta,
 
 .lp-hero__cta:active {
   transform: translateY(0);
+}
+
+/* ==========================================================
+   使い方の流れ セクション
+   ========================================================== */
+.lp-steps {
+  background-color: rgba(0, 0, 0, 0.06);
+  padding: 56px 16px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ヘッダー */
+.lp-steps__header {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+
+.lp-steps__header-text {
+  color: var(--lp-blue);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* ステップリスト */
+.lp-steps__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 各カード */
+.lp-steps__item {
+  background-color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  height: 128px;
+}
+
+.lp-steps__item-body {
+  flex: 1;
+  padding: 18px 16px 18px 20px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.lp-steps__item-title {
+  color: var(--lp-blue);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.4;
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 140px;
+}
+
+.lp-steps__item-desc {
+  color: var(--lp-blue);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.6;
+  opacity: 0.7;
+  text-align: left;
+  padding-top: 4px;
+  display: flex;
+  flex-direction: column;
+  width: 100px;
+  transform: rotate(360deg);
+}
+
+/* イラストエリア */
+.lp-steps__item-illust {
+  width: 110px;
+  height: 128px;
+  flex-shrink: 0;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.lp-steps__item-illust img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px 16px 8px 8px;
+  box-sizing: border-box;
 }
