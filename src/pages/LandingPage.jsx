@@ -41,7 +41,7 @@ export default function LandingPage() {
                     </div>
 
                     {/* ---- 重なりゾーン ---- */}
-                    {/* DOM順: town(最背面) → mockup+fade(中間) → CTA(最前面) */}
+                    {/* DOM順: town(最背面) → mockup → fade → CTA(最前面) */}
                     <div className="lp-hero__stack">
                         <img
                             src={townSvg}
@@ -54,8 +54,8 @@ export default function LandingPage() {
                                 src={appMockup}
                                 alt="もしもし防災 アプリのスクリーンショット"
                             />
-                            <div className="lp-hero__mockup-fade" />
                         </div>
+                        <div className="lp-hero__mockup-fade" />
                         <button
                             type="button"
                             className="lp-hero__cta"

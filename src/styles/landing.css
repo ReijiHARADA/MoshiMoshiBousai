@@ -125,16 +125,16 @@
   width: 100%;
   height: auto;
   align-self: end;
-  margin-bottom: 80px;
+  margin-bottom: 120px;
   pointer-events: none;
   justify-self: stretch;
 }
 
 /* mockup: town の手前 (DOM順2番目) */
 .lp-hero__mockup {
-  position: relative;
   width: 260px;
   margin-bottom: -70px;
+  align-self: start;
 }
 
 .lp-hero__mockup:hover {
@@ -148,13 +148,12 @@
   display: block;
 }
 
-/* 白グラデーション: mockup の下半分をフェードアウト */
+/* 白グラデーション: 全幅でmockup下半分をフェードアウト */
 .lp-hero__mockup-fade {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  align-self: end;
+  justify-self: stretch;
   height: 55%;
+  margin-bottom: -80px;
   pointer-events: none;
   background: linear-gradient(
     to bottom,
