@@ -13,7 +13,7 @@ export default function App() {
         <Route path="/landing" element={<LandingPage />} />
         {/* App pages — constrained mobile container */}
         <Route path="/*" element={
-          <div className="max-w-md mx-auto min-h-screen bg-gray-100 shadow-xl">
+          <div className="max-w-md mx-auto min-h-screen">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/join/:roomId" element={<JoinRoom />} />
