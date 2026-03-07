@@ -24,7 +24,7 @@ export default function App() {
             </div>
             <footer className="w-full bg-[#1a2535] py-5 text-center">
               <a
-                href="https://forms.gle/feedback"
+                href="https://forms.gle/SL6Q5LTbMchyGXvd9"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white text-[13px] underline underline-offset-2"
