@@ -150,7 +150,7 @@ export default function Home() {
     return (
         <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center">
             <LandingPage onCTA={handleScrollToForm} />
-            <div id="home-form" className="w-full max-w-[402px] px-5 py-10">
+            <div id="home-form" className="w-full max-w-[448px] px-4 py-10">
                 {/* メインカード（青） ※ <form> タグは使わない */}
                 <div className="bg-[#137FDE] rounded-[20px] px-7 py-7 flex flex-col gap-6">
                     <h2 className="text-[#F9F9F9] font-bold text-[24px]">
@@ -221,7 +221,7 @@ export default function Home() {
                                 {checkboxItems.map(({ key, label }) => (
                                     <label
                                         key={key}
-                                        className="flex items-center gap-2.5 cursor-pointer py-2.5 -mx-2 px-2 rounded-lg active:bg-white/10 transition-colors"
+                                        className="flex items-center gap-2.5 cursor-pointer py-1 -mx-2 px-2 rounded-lg active:bg-white/10 transition-colors"
                                     >
                                         <div
                                             className={`w-5 h-5 rounded-sm border-2 border-[#F9F9F9] flex items-center justify-center flex-shrink-0 transition-colors ${attributes[key]
