@@ -14,7 +14,7 @@
   --lp-dark-navy: #14324C;
   --lp-text-dark: #1a1a2e;
   --lp-text-muted: rgba(26, 26, 46, 0.65);
-  --lp-column-width: 580px;
+  --lp-column-width: 448px;
   --lp-font: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
 }
 
@@ -61,7 +61,7 @@
 
 .lp-hero__logo-svg {
   width: 100%;
-  max-width: 460px;
+  max-width: 100%;
   height: auto;
   display: block;
 }
@@ -70,18 +70,17 @@
 .lp-hero__badge {
   display: block;
   width: 100%;
-  max-width: 460px;
+  max-width: 100%;
   margin: 0 auto 20px;
   background-color: var(--lp-blue);
   color: #fff;
   font-family: var(--lp-font);
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.4;
   padding: 10px 20px;
   border-radius: 8px;
   text-align: center;
-  white-space: nowrap;
 }
 
 .lp-hero__badgeInner {
@@ -91,10 +90,10 @@
 
 .lp-hero__description {
   margin: 0 auto 8px;
-  max-width: 460px;
+  max-width: 100%;
   text-align: center;
   color: var(--lp-text-muted);
-  font-size: 20px;
+  font-size: 16px;
   line-height: 1.8;
 }
 
@@ -190,12 +189,12 @@ button.lp-hero__cta,
   line-height: 1;
   border: none;
   border-radius: 104px;
-  padding: 20px 48px;
+  padding: 20px 32px;
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
   width: 100%;
-  max-width: 440px;
+  max-width: 80%;
   box-shadow: 0px 4px 20px rgba(232, 130, 42, 0.50);
 }
 
