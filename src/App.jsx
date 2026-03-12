@@ -35,7 +35,7 @@ function AppWrapper() {
 
   return (
     <div className="app-wrapper flex flex-col" style={{ minHeight: '100dvh' }}>
-            <div className="content-column w-full flex-1 bg-white" style={{ maxWidth: '448px', margin: '0 auto' }}>
+            <div className="content-column w-full flex-1 bg-white" style={{ maxWidth: '448px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/join/:roomId" element={<JoinRoom />} />

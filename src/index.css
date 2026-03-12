@@ -21,7 +21,6 @@ body {
 @media (min-width: 449px) {
   .app-wrapper {
     position: relative;
-    isolation: isolate;
   }
 
   /* 全体を青で塗る */
@@ -30,25 +29,7 @@ body {
     position: fixed;
     inset: 0;
     background-color: #137FDE;
-    z-index: -2;
-    pointer-events: none;
-  }
-
-  /* 中央コンテンツカラムの白背景を全高に拡張 */
-  .content-column {
-    position: relative;
-  }
-
-  .content-column::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 448px;
-    background-color: #ffffff;
-    z-index: -1;
+    z-index: 0;
     pointer-events: none;
   }
 

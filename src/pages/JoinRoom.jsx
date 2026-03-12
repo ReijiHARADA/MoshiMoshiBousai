@@ -69,8 +69,9 @@ export default function JoinRoom() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center py-10 px-5">
-            <div className="w-full max-w-[402px]">
+        <div className="min-h-screen bg-white flex flex-col items-center relative" style={{ zIndex: 1 }}>
+            <div className="w-full py-10 px-5 relative bg-white">
+                <div className="w-full max-w-[402px] mx-auto">
                 {/* ヘッダー部分 */}
                 <div className="mb-6">
                     <h1 className="text-[#137FDE] font-black text-[32px] leading-tight mb-2">
@@ -203,6 +204,7 @@ export default function JoinRoom() {
                         </span>
                     </button>
                 </div>
+            </div>
             </div>
         </div>
     );
