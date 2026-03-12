@@ -568,6 +568,24 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
         };
     }, [card]);
 
+    // 青い画面が開いている間、html/bodyの背景色も青に変更
+    useEffect(() => {
+        if (card) {
+            const html = document.documentElement;
+            const body = document.body;
+            const prevHtmlBg = html.style.backgroundColor;
+            const prevBodyBg = body.style.backgroundColor;
+
+            html.style.backgroundColor = '#137FDE';
+            body.style.backgroundColor = '#137FDE';
+
+            return () => {
+                html.style.backgroundColor = prevHtmlBg;
+                body.style.backgroundColor = prevBodyBg;
+            };
+        }
+    }, [card]);
+
     const handleClose = () => {
         // 即座に元の画面に戻す
         onClose();
@@ -617,7 +635,7 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
 
     return (
         <div
-            className={`absolute inset-0 ${isClosing ? 'z-30' : 'z-40'} flex flex-col overflow-hidden`}
+            className={`absolute inset-0 ${isClosing ? 'z-30' : 'z-40'} flex flex-col overflow-hidden bg-[#137FDE]`}
             style={{
                 clipPath: isVisible
                     ? 'inset(0 0 0 0 round 0px)'
@@ -630,7 +648,13 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
             {/* メインコンテンツ */}
             <div className="flex-1 bg-[#137FDE] flex flex-col min-h-0">
                 {!isClosing && (
-                    <div className="flex-1 overflow-y-auto overscroll-contain px-6 pt-16 pb-8 min-h-0">
+                    <div 
+                        className="flex-1 overflow-y-auto overscroll-contain px-6 pb-8 min-h-0"
+                        style={{
+                            paddingTop: 'calc(4rem + env(safe-area-inset-top, 0px))',
+                            paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))'
+                        }}
+                    >
                         {/* バッジ + 閉じるボタン */}
                         <div className="flex items-center justify-between mb-4">
                             <span className={`inline-block px-3 py-1 rounded-full text-white text-sm font-bold ${badgeBg}`}>
