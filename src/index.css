@@ -2,9 +2,18 @@
 
 html,
 body {
-    background-color: #F5F5F5;
     margin: 0;
     padding: 0;
+    min-height: 100%;
+}
+
+html {
+    background-color: #F5F5F5; /* overscroll-top の白 */
+    overflow-x: clip;
+}
+
+body {
+    background-color: #F5F5F5; /* Safari theme-color と一致させる */
     overscroll-behavior-y: none;
 }
 

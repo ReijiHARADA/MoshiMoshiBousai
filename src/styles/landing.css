@@ -28,31 +28,28 @@
 .lp-root {
   font-family: var(--lp-font);
   background-color: var(--lp-blue);
-  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
+  position: relative;
+}
+
+/* 全ビューポートを青で塗る背景レイヤー */
+.lp-root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-color: var(--lp-blue);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* ---------- Column Wrapper ---------- */
 .lp-column {
-  width: 100%;
-  max-width: var(--lp-column-width);
-  margin: 0 auto;
+  width: min(100%, var(--lp-column-width));
+  margin-inline: auto;
   background-color: var(--lp-bg);
-  min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
-}
-
-.lp-column::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(var(--lp-column-width), 100vw);
-  height: 100vh;
-  background: var(--lp-bg);
-  z-index: -1;
-  pointer-events: none;
 }
 
 /* ==========================================================
@@ -62,7 +59,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: calc(48px + env(safe-area-inset-top)) 28px 60px;
+  padding: calc(48px + env(safe-area-inset-top, 0px)) 28px 60px;
   gap: 28px;
   background-color: var(--lp-bg);
 }

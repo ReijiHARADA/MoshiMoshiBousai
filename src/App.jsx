@@ -13,7 +13,7 @@ export default function App() {
         <Route path="/landing" element={<LandingPage />} />
         {/* App pages — constrained mobile container */}
         <Route path="/*" element={
-          <div className="min-h-screen flex flex-col">
+          <div className="flex flex-col" style={{ minHeight: '100dvh' }}>
             <div className="max-w-md mx-auto w-full flex-1">
               <Routes>
                 <Route path="/" element={<Home />} />
@@ -22,7 +22,7 @@ export default function App() {
                 <Route path="/room/:roomId/summary" element={<Summary />} />
               </Routes>
             </div>
-            <footer className="w-full bg-[#1a2535] pt-5 text-center" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+            <footer className="w-full bg-[#1a2535] pt-5 text-center" style={{ paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))' }}>
               <a
                 href="https://forms.gle/SL6Q5LTbMchyGXvd9"
                 target="_blank"
