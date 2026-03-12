@@ -296,7 +296,7 @@ export default function Questions() {
         <div
             className="h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden overscroll-none relative"
             style={{
-                backgroundColor: '#F5F5F5',
+                backgroundColor: '#ffffff',
             }}
         >
             {/* ヘッダー */}
@@ -339,7 +339,7 @@ export default function Questions() {
                                             {String(index + 1).padStart(2, '0')}/{dispTot}
                                         </span>
                                     </div>
-                                    <h2 className="font-bold text-white leading-[135%] mb-3 whitespace-pre-line" style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}>
+                                    <h2 className="font-bold text-white leading-[135%] mb-3 whitespace-pre-line" style={{ fontSize: 'clamp(29px, 8vw, 36px)' }}>
                                         {qText}
                                     </h2>
                                     <input
@@ -349,14 +349,14 @@ export default function Questions() {
                                         placeholder={question.placeholder}
                                         className="w-full px-4 py-2.5 rounded-xl bg-[#F9F9F9] text-[#484848] placeholder-[#CDCDCD] text-[16px] font-medium focus:outline-none transition-all mb-3"
                                     />
-                                    <div className={`flex-1 rounded-xl px-4 py-3 flex flex-col min-h-[64px] ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#1F685D]' : 'bg-[#123C4B]'}`}>
-                                        <p className={`text-xs mb-1 ${question.id === 'q3' || question.id === 'q4' ? 'text-[#0EB09F]/50' : 'text-[#137FDE]/50'}`}>メモ用欄</p>
+                                    <div className={`flex-1 rounded-xl px-4 py-2 flex flex-col min-h-[48px] ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#1F685D]' : 'bg-[#123C4B]'}`}>
+                                        <p className={`text-[10px] mb-0.5 ${question.id === 'q3' || question.id === 'q4' ? 'text-[#0EB09F]/50' : 'text-[#137FDE]/50'}`}>メモ用欄</p>
                                         <textarea
                                             value={memos[question.id] || ''}
                                             onChange={(e) => handleMemoChange(question.id, e.target.value)}
                                             placeholder={question.memo}
-                                            rows={3}
-                                            className={`w-full flex-1 bg-transparent text-sm focus:outline-none resize-none ${question.id === 'q3' || question.id === 'q4' ? 'text-[#0EB09F] placeholder-[#0EB09F]/30' : 'text-[#137FDE] placeholder-[#137FDE]/30'}`}
+                                            rows={2}
+                                            className={`w-full flex-1 bg-transparent text-xs focus:outline-none resize-none ${question.id === 'q3' || question.id === 'q4' ? 'text-[#0EB09F] placeholder-[#0EB09F]/30' : 'text-[#137FDE] placeholder-[#137FDE]/30'}`}
                                         />
                                     </div>
                                 </div>
