@@ -279,7 +279,7 @@ export default function Questions() {
                                             {String(index + 1).padStart(2, '0')}/{dispTot}
                                         </span>
                                     </div>
-                                    <h2 className="text-[20px] font-bold text-white leading-relaxed mb-5 whitespace-pre-line flex-shrink-0">
+                                    <h2 className="font-bold text-white leading-[140%] mb-5 whitespace-pre-line flex-shrink-0" style={{ fontSize: '28px' }}>
                                         {qText}
                                     </h2>
                                     <input
