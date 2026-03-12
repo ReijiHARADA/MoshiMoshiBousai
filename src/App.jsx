@@ -22,7 +22,7 @@ export default function App() {
                 <Route path="/room/:roomId/summary" element={<Summary />} />
               </Routes>
             </div>
-            <footer className="w-full bg-[#1a2535] py-5 text-center">
+            <footer className="w-full bg-[#1a2535] pt-5 text-center" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
               <a
                 href="https://forms.gle/SL6Q5LTbMchyGXvd9"
                 target="_blank"
