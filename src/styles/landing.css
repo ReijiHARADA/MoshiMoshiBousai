@@ -39,6 +39,20 @@
   margin: 0 auto;
   background-color: var(--lp-bg);
   min-height: 100vh;
+  position: relative;
+}
+
+.lp-column::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(var(--lp-column-width), 100vw);
+  height: 100vh;
+  background: var(--lp-bg);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* ==========================================================
