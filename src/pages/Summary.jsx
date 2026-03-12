@@ -26,6 +26,7 @@ export default function Summary() {
     const [dragOffset, setDragOffset] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const [slideWidth, setSlideWidth] = useState(0);
+    const [isClosingOverlay, setIsClosingOverlay] = useState(false);
 
     // Refs
     const containerRef = useRef(null);
@@ -207,8 +208,8 @@ export default function Summary() {
 
     // ---------- カードタップナビゲーション ----------
     const handleCardClick = (e) => {
-        // 展開モード中は無視
-        if (expandedCard !== null) return;
+        // 展開モード中またはオーバーレイを閉じている最中は無視
+        if (expandedCard !== null || isClosingOverlay) return;
         
         const card = e.currentTarget;
         const rect = card.getBoundingClientRect();
@@ -377,13 +378,19 @@ export default function Summary() {
                 card={currentCard}
                 roomId={roomId}
                 displayText={displayText}
-                onClose={() => setExpandedCard(null)}
+                onClose={() => {
+                    setIsClosingOverlay(true);
+                    setExpandedCard(null);
+                    setTimeout(() => setIsClosingOverlay(false), 300);
+                }}
                 onAgreed={(agreementData) => {
                     setAgreements((prev) => {
                         const filtered = prev.filter((a) => a.id !== agreementData.id);
                         return [...filtered, agreementData];
                     });
+                    setIsClosingOverlay(true);
                     setExpandedCard(null);
+                    setTimeout(() => setIsClosingOverlay(false), 300);
                 }}
             />
 
@@ -533,6 +540,7 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
     const [isVisible, setIsVisible] = useState(false);
     const [isAnimatingOut, setIsAnimatingOut] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
+    const [animationPhase, setAnimationPhase] = useState('idle'); // idle, shrinking, expanding, expanded
     const prevCardRef = useRef(null);
 
     // 開く/閉じるアニメーション管理
@@ -542,14 +550,27 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
             setAgreedText(card.agreement?.agreedText || '');
             setMemoText('');
             setIsClosing(false);
-            // 次フレームでアニメーション開始
-            requestAnimationFrame(() => setIsVisible(true));
+            
+            // 収縮フェーズ開始
+            setAnimationPhase('shrinking');
+            setTimeout(() => {
+                // 展開フェーズ開始
+                setAnimationPhase('expanding');
+                setIsVisible(true);
+                
+                // 展開完了
+                setTimeout(() => {
+                    setAnimationPhase('expanded');
+                }, 150);
+            }, 50);
         } else if (prevCardRef.current) {
             // 閉じるアニメーション
-            setIsAnimatingOut(true);
+            setAnimatingOut(true);
             setIsVisible(false);
+            setAnimationPhase('shrinking');
             const timer = setTimeout(() => {
                 setIsAnimatingOut(false);
+                setAnimationPhase('idle');
                 prevCardRef.current = null;
             }, 300);
             return () => clearTimeout(timer);
@@ -568,9 +589,9 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
         };
     }, [card]);
 
-    // 青い画面が開いている間、html/bodyの背景色も青に変更
+    // 青い画面が開いている間、html/bodyの背景色も青に変更（収縮完了後）
     useEffect(() => {
-        if (card) {
+        if (card && animationPhase === 'expanding') {
             const html = document.documentElement;
             const body = document.body;
             const prevHtmlBg = html.style.backgroundColor;
@@ -584,19 +605,21 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                 body.style.backgroundColor = prevBodyBg;
             };
         }
-    }, [card]);
+    }, [card, animationPhase]);
 
     const handleClose = () => {
-        // 即座に元の画面に戻す
-        onClose();
-        // 青い背景だけが縮小するアニメーションを開始
+        // 収縮アニメーション開始
+        setAnimationPhase('shrinking');
         setIsClosing(true);
-        setIsVisible(false);
+        
+        // 収縮完了後に画面を閉じる
         setTimeout(() => {
+            onClose();
             setIsClosing(false);
             setIsAnimatingOut(false);
+            setAnimationPhase('idle');
             prevCardRef.current = null;
-        }, 400);
+        }, 200);
     };
 
     const displayCard = card || prevCardRef.current;
@@ -617,34 +640,72 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                 createdAt: new Date().toISOString(),
             };
             await setDoc(doc(collection(db, 'agreements'), agreementId), agreementData);
-            // 即座に親に通知して元の画面へ
-            onAgreed(agreementData);
-            // 青い背景が縮小するアニメーション
+            // 収縮アニメーション開始
+            setAnimationPhase('shrinking');
             setIsClosing(true);
-            setIsVisible(false);
+            
+            // 収縮完了後に画面を閉じる
             setTimeout(() => {
+                onAgreed(agreementData);
                 setIsClosing(false);
                 setIsAnimatingOut(false);
+                setAnimationPhase('idle');
                 prevCardRef.current = null;
-            }, 400);
+            }, 200);
         } catch (err) {
             console.error('合意保存エラー:', err);
             alert('保存に失敗しました。');
         } finally { setSaving(false); }
     };
 
+    const getClipPath = () => {
+        if (animationPhase === 'idle' || animationPhase === 'shrinking') {
+            return 'circle(5% at 50% 50%)';
+        } else if (animationPhase === 'expanding' || animationPhase === 'expanded') {
+            return 'circle(150% at 50% 50%)';
+        }
+        return 'circle(5% at 50% 50%)';
+    };
+
+    const getTransition = () => {
+        if (animationPhase === 'shrinking') {
+            return 'clip-path 0.05s cubic-bezier(0.4, 0, 1, 1)';
+        } else if (animationPhase === 'expanding') {
+            return 'clip-path 0.15s cubic-bezier(0.25, 1, 0.5, 1)';
+        }
+        return 'clip-path 0.1s ease';
+    };
+
     return (
-        <div
-            className={`absolute inset-0 ${isClosing ? 'z-30' : 'z-40'} flex flex-col overflow-hidden bg-[#137FDE]`}
-            style={{
-                clipPath: isVisible
-                    ? 'inset(0 0 0 0 round 0px)'
-                    : 'inset(25% 20% 35% 20% round 24px)',
-                opacity: isVisible ? 1 : 0,
-                transition: 'clip-path 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.25s ease',
-                pointerEvents: isVisible ? 'auto' : 'none',
-            }}
-        >
+        <>
+            {/* Safe-area背景（上部） */}
+            <div
+                className="absolute top-0 left-0 right-0 bg-[#137FDE]"
+                style={{
+                    height: 'env(safe-area-inset-top, 0px)',
+                    opacity: animationPhase === 'expanding' || animationPhase === 'expanded' ? 1 : 0,
+                    transition: 'opacity 0.05s ease',
+                    zIndex: 50,
+                }}
+            />
+            {/* Safe-area背景（下部） */}
+            <div
+                className="absolute bottom-0 left-0 right-0 bg-[#137FDE]"
+                style={{
+                    height: 'env(safe-area-inset-bottom, 0px)',
+                    opacity: animationPhase === 'expanding' || animationPhase === 'expanded' ? 1 : 0,
+                    transition: 'opacity 0.05s ease',
+                    zIndex: 50,
+                }}
+            />
+            <div
+                className={`absolute inset-0 ${isClosing ? 'z-30' : 'z-40'} flex flex-col overflow-hidden bg-[#137FDE]`}
+                style={{
+                    clipPath: getClipPath(),
+                    transition: getTransition(),
+                    pointerEvents: (animationPhase === 'expanded') ? 'auto' : 'none',
+                }}
+            >
             {/* メインコンテンツ */}
             <div className="flex-1 bg-[#137FDE] flex flex-col min-h-0">
                 {!isClosing && (
@@ -655,27 +716,51 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                             paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))'
                         }}
                     >
-                        {/* バッジ + 閉じるボタン */}
-                        <div className="flex items-center justify-between mb-4">
+                        {/* バッジ + 閉じるボタン - レイヤー1 */}
+                        <div 
+                            className="flex items-center justify-between mb-4"
+                            style={{
+                                opacity: animationPhase === 'expanded' ? 1 : 0,
+                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
+                                transition: 'opacity 0.1s ease 0.05s, transform 0.1s ease 0.05s'
+                            }}
+                        >
                             <span className={`inline-block px-3 py-1 rounded-full text-white text-sm font-bold ${badgeBg}`}>
                                 {badgeText}
                             </span>
                             <button
                                 type="button"
-                                onClick={handleClose}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleClose();
+                                }}
                                 className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-[#137FDE] text-xl font-semibold hover:bg-white/90 transition-all"
                             >
                                 ✕
                             </button>
                         </div>
 
-                        {/* 質問 */}
-                        <h3 className="text-2xl font-bold text-white leading-relaxed mb-6 whitespace-pre-line">
+                        {/* 質問 - レイヤー1 */}
+                        <h3 
+                            className="text-2xl font-bold text-white leading-relaxed mb-6 whitespace-pre-line"
+                            style={{
+                                opacity: animationPhase === 'expanded' ? 1 : 0,
+                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
+                                transition: 'opacity 0.1s ease 0.06s, transform 0.1s ease 0.06s'
+                            }}
+                        >
                             {displayText(question?.text)}
                         </h3>
 
-                        {/* 回答一覧 */}
-                        <div className="space-y-4 mb-6">
+                        {/* 回答一覧 - レイヤー2 */}
+                        <div 
+                            className="space-y-4 mb-6"
+                            style={{
+                                opacity: animationPhase === 'expanded' ? 1 : 0,
+                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
+                                transition: 'opacity 0.1s ease 0.08s, transform 0.1s ease 0.08s'
+                            }}
+                        >
                             {cohabitingAnswers?.map(({ user, answerText, memoText: memo }) => (
                                 <div key={user.id} className="flex items-start justify-between">
                                     <span className="inline-block bg-white text-stone-900 rounded-full px-2.5 py-0.5 text-base font-medium border border-white flex-shrink-0">
@@ -689,7 +774,14 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                             ))}
                         </div>
 
-                        {/* Tips カード */}
+                        {/* Tips カード - レイヤー2 */}
+                        <div
+                            style={{
+                                opacity: animationPhase === 'expanded' ? 1 : 0,
+                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
+                                transition: 'opacity 0.1s ease 0.09s, transform 0.1s ease 0.09s'
+                            }}
+                        >
                         {(question?.id === 'q5' || question?.id === 'q6') ? (
                             /* === 171ダイヤル Tips (Q5/Q6) === */
                             <div className="bg-white rounded-lg p-4 mb-6">
@@ -799,9 +891,17 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                                 </div>
                             </div>
                         )}
+                        </div>
 
-                        {/* 合意フォーム */}
-                        <div className="mb-4">
+                        {/* 合意フォーム - レイヤー3 */}
+                        <div 
+                            className="mb-4"
+                            style={{
+                                opacity: animationPhase === 'expanded' ? 1 : 0,
+                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
+                                transition: 'opacity 0.1s ease 0.1s, transform 0.1s ease 0.1s'
+                            }}
+                        >
                             <label className="text-white text-xl font-bold mb-3 block">合意した避難場所</label>
                             <input
                                 type="text"
@@ -827,6 +927,11 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                             onClick={handleAgree}
                             disabled={saving}
                             className="w-full py-3 rounded-full bg-[#FE7833] text-white font-bold text-2xl shadow-lg hover:bg-[#e56a2a] active:scale-[0.98] transition-all disabled:opacity-50"
+                            style={{
+                                opacity: animationPhase === 'expanded' ? 1 : 0,
+                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
+                                transition: 'opacity 0.1s ease 0.11s, transform 0.1s ease 0.11s'
+                            }}
                         >
                             {saving ? '保存中...' : '全員で合意した'}
                         </button>
@@ -834,6 +939,7 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                 )}
             </div>
         </div>
+        </>
     );
 }
 
