@@ -374,7 +374,7 @@ export default function Questions() {
                                     {dispTot}/{dispTot}
                                 </span>
                             </div>
-                            <h1 className="font-bold text-white leading-[135%] mb-3" style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}>
+                            <h1 className="font-bold text-white leading-[135%] mb-3" style={{ fontSize: 'clamp(29px, 8vw, 36px)' }}>
                                 お疲れ様でした！
                                 <br />
                                 全{totalQuestions}問の回答が完了しました。

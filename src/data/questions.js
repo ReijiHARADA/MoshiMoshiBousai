@@ -60,7 +60,7 @@ export const QUESTIONS = [
     },
     {
         id: 'q7',
-        text: 'もしも、\n家を離れる時に\n家族への「置き手紙」を\n残すなら\nどこに貼る？',
+        text: 'もしも、\n家を離れる時に\n家族への「置き手紙」\nを残すなら\nどこに貼る？',
         targetAttribute: 'all',
         placeholder: '冷蔵庫のドア',
         memo: '例）家族全員が必ず見る場所を決めておく',
