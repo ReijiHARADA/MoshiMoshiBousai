@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { QUESTIONS } from '../data/questions';
-import { ChevronRight } from 'lucide-react';
 import familyIllustration from '../assets/family.svg';
 
 export default function Questions() {
@@ -187,6 +186,45 @@ export default function Questions() {
         if (currentIndex > 0) setCurrentIndex((p) => p - 1);
     };
 
+    // ---------- カードタップナビゲーション ----------
+    const handleCardClick = (e) => {
+        // 入力フィールドにフォーカスがある場合は無視
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        // 完了スライドの場合は無視（ボタンで対応）
+        if (currentIndex >= totalQuestions) return;
+        
+        const card = e.currentTarget;
+        const rect = card.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const cardCenter = rect.width / 2;
+        
+        if (clickX > cardCenter) {
+            goNext();
+        } else {
+            goPrev();
+        }
+    };
+
+    // ---------- 完了カードタップナビゲーション ----------
+    const handleCompletionCardClick = (e) => {
+        // ボタンクリックの場合は無視
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+        
+        const card = e.currentTarget;
+        const rect = card.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const cardCenter = rect.width / 2;
+        
+        if (clickX > cardCenter) {
+            // 右側タップ：保存して画面遷移
+            handleSaveAndNavigate();
+        } else {
+            // 左側タップ：前のカードへ
+            goPrev();
+        }
+    };
+
     const handleAnswerChange = (qId, val) => setAnswers((p) => ({ ...p, [qId]: val }));
     const handleMemoChange = (qId, val) => setMemos((p) => ({ ...p, [qId]: val }));
 
@@ -272,7 +310,8 @@ export default function Questions() {
                         return (
                             <div key={question.id}
                                 className="h-full flex-shrink-0 flex flex-col pb-2 pt-2"
-                                style={{ width: cardWidth || 'calc(100vw - 48px)' }}>
+                                style={{ width: cardWidth || 'calc(100vw - 48px)' }}
+                                onClick={handleCardClick}>
                                 <div className={`flex-1 rounded-[20px] p-5 flex flex-col shadow-xl overflow-hidden min-h-0 ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#0EB09F]' : 'bg-[#137FDE]'}`}>
                                     <div className="mb-4">
                                         <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
@@ -306,7 +345,8 @@ export default function Questions() {
 
                     {/* 完了スライド */}
                     <div className="h-full flex-shrink-0 flex flex-col pb-2 pt-2"
-                        style={{ width: cardWidth || 'calc(100vw - 48px)' }}>
+                        style={{ width: cardWidth || 'calc(100vw - 48px)' }}
+                        onClick={handleCompletionCardClick}>
                         <div className="flex-1 rounded-[20px] p-5 flex flex-col shadow-xl overflow-y-auto bg-[#FE7833]">
                             <div className="mb-4">
                                 <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
@@ -321,18 +361,28 @@ export default function Questions() {
                             <p className="text-white/80 text-sm leading-relaxed mb-6">
                                 あなたが考えた「もしも」の備えを、家族の回答と突き合わせてみましょう。意外なズレが見つかるかもしれません。
                             </p>
-                            <div className="flex justify-center items-center flex-1 px-[15px]">
+                            <div className="flex justify-center items-center flex-1 px-[15px] mb-6">
                                 <img src={familyIllustration} alt="完了" className="w-full object-contain" />
+                            </div>
+                            <div className="px-4">
+                                <button
+                                    type="button"
+                                    onClick={handleSaveAndNavigate}
+                                    disabled={saving}
+                                    className="w-full h-[50px] rounded-full font-bold text-[18px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 bg-white text-[#FE7833] hover:opacity-90"
+                                >
+                                    {saving ? '保存中...' : '家族の回答と比較する'}
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* ドットインジケーター + 下部ボタン */}
+            {/* ドットインジケーター */}
             <div className="px-5 pb-4 pt-2 flex-shrink-0">
                 {/* ドット */}
-                <div className="flex justify-center items-center gap-2 mb-4">
+                <div className="flex justify-center items-center gap-2">
                     {filteredQuestions.map((_, i) => (
                         <div
                             key={i}
@@ -345,17 +395,6 @@ export default function Questions() {
                         />
                     ))}
                 </div>
-                <button
-                    type="button"
-                    onClick={isOnCompletion ? handleSaveAndNavigate : goNext}
-                    disabled={isOnCompletion && saving}
-                    className="w-full h-[46px] rounded-full font-bold text-[20px] shadow-[0_0_11.5px_0_rgba(93,93,93,0.50)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 bg-[#F9F9F9] text-[rgba(253,120,51,1)] hover:opacity-90"
-                >
-                    {isOnCompletion
-                        ? (saving ? '保存中...' : '家族の回答と比較する')
-                        : (currentIndex < totalQuestions - 1 ? '次へ' : '回答を完了する')}
-                    {!isOnCompletion && <ChevronRight className="w-5 h-5" />}
-                </button>
             </div>
 
             {/* コピー通知 */}
