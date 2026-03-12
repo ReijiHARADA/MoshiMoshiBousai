@@ -40,6 +40,26 @@ export default function Summary() {
     useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
     useEffect(() => { expandedRef.current = expandedCard; }, [expandedCard]);
 
+    // ---------- スクロール抑制 ----------
+    useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+
+        const prevHtmlOverflow = html.style.overflow;
+        const prevBodyOverflow = body.style.overflow;
+        const prevBodyOverscroll = body.style.overscrollBehavior;
+
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+        body.style.overscrollBehavior = 'none';
+
+        return () => {
+            html.style.overflow = prevHtmlOverflow;
+            body.style.overflow = prevBodyOverflow;
+            body.style.overscrollBehavior = prevBodyOverscroll;
+        };
+    }, []);
+
     // ---------- Firestore ----------
     useEffect(() => {
         const usersQ = query(collection(db, 'users'), where('roomId', '==', roomId));
@@ -185,6 +205,29 @@ export default function Summary() {
         setTimeout(() => setShowCopied(false), 2000);
     };
 
+    // ---------- カードタップナビゲーション ----------
+    const handleCardClick = (e) => {
+        // 展開モード中は無視
+        if (expandedCard !== null) return;
+        
+        const card = e.currentTarget;
+        const rect = card.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const cardCenter = rect.width / 2;
+        
+        if (clickX > cardCenter) {
+            // 右側タップ：次へ
+            if (currentIndex < totalCount - 1) {
+                setCurrentIndex(currentIndex + 1);
+            }
+        } else {
+            // 左側タップ：前へ
+            if (currentIndex > 0) {
+                setCurrentIndex(currentIndex - 1);
+            }
+        }
+    };
+
     const displayText = (text) => {
         if (!text) return '';
         // {prevAnswer:qX} → 合意済み or 回答一致ならそのテキスト、それ以外は __
@@ -221,10 +264,10 @@ export default function Summary() {
     const currentCard = expandedCard !== null ? questionCards[expandedCard] : null;
 
     return (
-        <div className="h-screen relative overflow-hidden bg-[#F5F5F5] flex flex-col">
+        <div className="h-[100dvh] max-h-[100dvh] relative overflow-hidden overscroll-none bg-white flex flex-col">
             {/* ===== ヘッダー ===== */}
             <div
-                className="flex items-center justify-between px-5 pt-10 pb-3 flex-shrink-0 transition-all duration-300"
+                className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0 transition-all duration-300"
                 style={{ opacity: isAnyExpanded ? 0 : 1, pointerEvents: isAnyExpanded ? 'none' : 'auto' }}
             >
                 <div
@@ -258,13 +301,15 @@ export default function Summary() {
                         transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)',
                         willChange: 'transform',
                         gap: `${CARD_GAP}px`,
+                        paddingBottom: '150px',
                     }}
                 >
                     {questionCards.map((card, idx) => (
                         <div
                             key={card.question.id}
-                            className="h-full flex-shrink-0 flex flex-col pb-2 pt-2"
+                            className="h-full flex-shrink-0 flex flex-col py-1"
                             style={{ width: cardWidth || 'calc(100vw - 48px)' }}
+                            onClick={handleCardClick}
                         >
                             {card.isIndividual ? (
                                 <IndividualCard
@@ -286,11 +331,16 @@ export default function Summary() {
 
             {/* ===== 下部 ===== */}
             <div
-                className="px-5 pb-4 pt-2 flex-shrink-0 transition-all duration-300"
-                style={{ opacity: isAnyExpanded ? 0 : 1, pointerEvents: isAnyExpanded ? 'none' : 'auto' }}
+                className="absolute left-0 right-0 px-5 pointer-events-none transition-opacity duration-300"
+                style={{ 
+                    bottom: '16px',
+                    opacity: isAnyExpanded ? 0 : 1, 
+                    pointerEvents: isAnyExpanded ? 'none' : 'auto',
+                    backgroundColor: 'transparent'
+                }}
             >
                 {/* ドットインジケーター */}
-                <div className="flex justify-center items-center gap-2 mb-4">
+                <div className="relative z-10 flex justify-center items-center gap-2 mb-4 drop-shadow-[0_8px_14px_rgba(93,93,93,0.22)] pointer-events-auto">
                     {questionCards.map((_, i) => (
                         <div
                             key={i}
@@ -307,7 +357,7 @@ export default function Summary() {
                     type="button"
                     disabled={agreedCount < totalCount}
                     onClick={() => setShowSheetModal(true)}
-                    className="w-full h-[53px] rounded-full font-bold text-[24px] transition-all active:scale-[0.98] disabled:cursor-not-allowed"
+                    className="w-full h-[53px] rounded-full font-bold text-[24px] transition-all active:scale-[0.98] disabled:cursor-not-allowed pointer-events-auto"
                     style={{
                         backgroundColor: agreedCount >= totalCount ? '#FE7833' : '#8D8D8D',
                         color: agreedCount >= totalCount ? '#F9F9F9' : '#A2A2A2',
@@ -368,14 +418,14 @@ function IndividualCard({ card, users, displayText }) {
 
     return (
         <div className="flex-1 bg-[#0EB09F] rounded-[20px] flex flex-col shadow-xl overflow-hidden min-h-0">
-            <div className="flex-1 overflow-y-auto p-5">
-                <h3 className="text-[20px] font-bold text-white leading-relaxed mb-5 whitespace-pre-line">
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+                <h3 className="font-bold text-white leading-[135%] mb-3 whitespace-pre-line" style={{ fontSize: 'clamp(18px, 5vw, 20px)' }}>
                     {displayText(question.text)}
                 </h3>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {allAnswers.map(({ user, answerText, memoText: memo }) => (
-                        <div key={user.id} className="bg-white rounded-xl p-4 flex items-start gap-4 shadow-sm">
+                        <div key={user.id} className="bg-white rounded-xl px-4 py-3 flex items-start gap-3 shadow-sm">
                             <span className="inline-flex justify-center items-center bg-[#0EB09F] text-white rounded-full px-3 py-1 text-sm font-bold flex-shrink-0">
                                 {user.name}
                             </span>
@@ -401,14 +451,14 @@ function SummaryCard({ card, displayText, onExpand }) {
 
     return (
         <div className="flex-1 bg-[#137FDE] rounded-[20px] flex flex-col shadow-xl overflow-hidden min-h-0">
-            <div className="flex-1 overflow-y-auto p-5 flex flex-col">
-                <div className="mb-3">
+            <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col">
+                <div className="mb-2">
                     <span className={`inline-block px-3.5 py-1.5 rounded-full text-white text-sm font-bold ${badgeBg}`}>
                         {badgeText}
                     </span>
                 </div>
 
-                <h3 className="text-[20px] font-bold text-white leading-relaxed mb-5 whitespace-pre-line">
+                <h3 className="font-bold text-white leading-[135%] mb-3 whitespace-pre-line" style={{ fontSize: 'clamp(18px, 5vw, 20px)' }}>
                     {displayText(question.text)}
                 </h3>
 

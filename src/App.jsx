@@ -8,7 +8,7 @@ import LandingPage from './pages/LandingPage';
 
 function AppWrapper() {
   const location = useLocation();
-  const hideFooter = /^\/room\/[^/]+\/questions$/.test(location.pathname);
+  const hideFooter = /^\/room\/[^/]+\/(questions|summary)$/.test(location.pathname);
 
   useEffect(() => {
     const updateThemeColor = () => {
