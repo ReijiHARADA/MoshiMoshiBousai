@@ -68,6 +68,26 @@ export default function Questions() {
     // state → ref 同期
     useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
 
+    // ---------- スクロール抑制 ----------
+    useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+
+        const prevHtmlOverflow = html.style.overflow;
+        const prevBodyOverflow = body.style.overflow;
+        const prevBodyOverscroll = body.style.overscrollBehavior;
+
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+        body.style.overscrollBehavior = 'none';
+
+        return () => {
+            html.style.overflow = prevHtmlOverflow;
+            body.style.overflow = prevBodyOverflow;
+            body.style.overscrollBehavior = prevBodyOverscroll;
+        };
+    }, []);
+
     const resolveQuestionText = (text) => {
         if (!text) return '';
         let resolved = text.replace(/\{prevAnswer:(\w+)\}/g, (_, qId) => {
@@ -274,13 +294,13 @@ export default function Questions() {
 
     return (
         <div
-            className="h-screen flex flex-col overflow-hidden relative"
+            className="h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden overscroll-none relative"
             style={{
                 backgroundColor: '#F5F5F5',
             }}
         >
             {/* ヘッダー */}
-            <div className="flex items-center justify-between px-5 pt-10 pb-3 flex-shrink-0">
+            <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
                 <div />
                 <button type="button" onClick={handleShare}
                     className="flex items-center gap-1 rounded-full px-3 h-9 text-[16px] font-medium active:scale-95 transition-all bg-[#8D8D8D] text-white hover:bg-[#7a7a7a]">
@@ -310,16 +330,16 @@ export default function Questions() {
                         const qText = resolveQuestionText(question.text || '質問文が設定されていません');
                         return (
                             <div key={question.id}
-                                className="h-full flex-shrink-0 flex flex-col pb-2 pt-2"
+                                className="h-full flex-shrink-0 flex flex-col py-1"
                                 style={{ width: cardWidth || 'calc(100vw - 48px)' }}
                                 onClick={handleCardClick}>
-                                <div className={`flex-1 rounded-[20px] p-5 flex flex-col shadow-xl overflow-hidden min-h-0 ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#0EB09F]' : 'bg-[#137FDE]'}`}>
+                                <div className={`flex-1 rounded-[20px] px-5 py-4 flex flex-col shadow-xl overflow-hidden min-h-0 ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#0EB09F]' : 'bg-[#137FDE]'}`}>
                                     <div className="mb-4">
                                         <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
                                             {String(index + 1).padStart(2, '0')}/{dispTot}
                                         </span>
                                     </div>
-                                    <h2 className="font-bold text-white leading-[140%] mb-5 whitespace-pre-line flex-shrink-0" style={{ fontSize: '28px', minHeight: '196px' }}>
+                                    <h2 className="font-bold text-white leading-[135%] mb-3 whitespace-pre-line" style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}>
                                         {qText}
                                     </h2>
                                     <input
@@ -327,9 +347,9 @@ export default function Questions() {
                                         value={answers[question.id] || ''}
                                         onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                                         placeholder={question.placeholder}
-                                        className="w-full px-4 py-3 rounded-xl bg-[#F9F9F9] text-[#484848] placeholder-[#CDCDCD] text-[16px] font-medium focus:outline-none transition-all mb-4"
+                                        className="w-full px-4 py-2.5 rounded-xl bg-[#F9F9F9] text-[#484848] placeholder-[#CDCDCD] text-[16px] font-medium focus:outline-none transition-all mb-3"
                                     />
-                                    <div className={`flex-1 rounded-xl p-4 flex flex-col min-h-[80px] ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#1F685D]' : 'bg-[#123C4B]'}`}>
+                                    <div className={`flex-1 rounded-xl px-4 py-3 flex flex-col min-h-[64px] ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#1F685D]' : 'bg-[#123C4B]'}`}>
                                         <p className={`text-xs mb-1 ${question.id === 'q3' || question.id === 'q4' ? 'text-[#0EB09F]/50' : 'text-[#137FDE]/50'}`}>メモ用欄</p>
                                         <textarea
                                             value={memos[question.id] || ''}
@@ -345,24 +365,24 @@ export default function Questions() {
                     })}
 
                     {/* 完了スライド */}
-                    <div className="h-full flex-shrink-0 flex flex-col pb-2 pt-2"
+                    <div className="h-full flex-shrink-0 flex flex-col py-1"
                         style={{ width: cardWidth || 'calc(100vw - 48px)' }}
                         onClick={handleCompletionCardClick}>
-                        <div className="flex-1 rounded-[20px] p-5 flex flex-col shadow-xl overflow-y-auto bg-[#FE7833]">
-                            <div className="mb-4">
+                        <div className="flex-1 rounded-[20px] px-5 py-4 flex flex-col shadow-xl overflow-hidden bg-[#FE7833]">
+                            <div className="mb-3">
                                 <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
                                     {dispTot}/{dispTot}
                                 </span>
                             </div>
-                            <h1 className="text-[28px] font-bold text-white leading-[140%] mb-4">
+                            <h1 className="font-bold text-white leading-[135%] mb-3" style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}>
                                 お疲れ様でした！
                                 <br />
                                 全{totalQuestions}問の回答が完了しました。
                             </h1>
-                            <p className="text-white/80 text-sm leading-relaxed mb-6">
+                            <p className="text-white/80 text-sm leading-relaxed mb-4">
                                 あなたが考えた「もしも」の備えを、家族の回答と突き合わせてみましょう。意外なズレが見つかるかもしれません。
                             </p>
-                            <div className="flex justify-center items-center flex-1 px-[15px] mb-6">
+                            <div className="flex justify-center items-center flex-1 px-[15px] mb-4">
                                 <img src={familyIllustration} alt="完了" className="w-full object-contain" />
                             </div>
                             <div className="px-4">
@@ -381,7 +401,7 @@ export default function Questions() {
             </div>
 
             {/* ドットインジケーター */}
-            <div className="absolute left-0 right-0 pointer-events-none" style={{ bottom: '16px', backgroundColor: 'transparent' }}>
+            <div className="absolute left-0 right-0 pb-3 pt-0 -mt-1 pointer-events-none" style={{ bottom: '0', backgroundColor: 'transparent' }}>
                 {/* ドット */}
                 <div className="relative z-10 flex justify-center items-center gap-2 pointer-events-auto drop-shadow-[0_8px_14px_rgba(93,93,93,0.22)]">
                     {filteredQuestions.map((_, i) => (
