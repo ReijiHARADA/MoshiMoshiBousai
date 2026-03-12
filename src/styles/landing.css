@@ -8,7 +8,7 @@
 :root {
   --lp-blue: #137FDE;
   --lp-blue-dark: #0f6dbf;
-  --lp-bg: #F5F5F5;
+  --lp-bg: #ffffff;
   --lp-orange: #F2994A;
   --lp-orange-dark: #e08030;
   --lp-dark-navy: #14324C;
@@ -31,16 +31,42 @@
   min-height: 100dvh;
   width: 100%;
   position: relative;
+  isolation: isolate;
 }
 
-/* 全ビューポートを青で塗る背景レイヤー */
-.lp-root::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-color: var(--lp-blue);
-  z-index: -1;
-  pointer-events: none;
+/* PC のみ青ガターを表示 */
+@media (min-width: 449px) {
+  /* 全体を青で塗る */
+  .lp-root::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-color: var(--lp-blue);
+    z-index: -2;
+    pointer-events: none;
+  }
+
+  /* 中央に白い帯を配置 */
+  .lp-root::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: var(--lp-column-width);
+    background-color: #ffffff;
+    z-index: -1;
+    pointer-events: none;
+  }
+}
+
+/* モバイルでは青を非表示 */
+@media (max-width: 448px) {
+  .lp-root::before,
+  .lp-root::after {
+    display: none;
+  }
 }
 
 /* ---------- Column Wrapper ---------- */

@@ -148,11 +148,11 @@ export default function Home() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center">
+        <div className="min-h-screen bg-white flex flex-col items-center relative" style={{ zIndex: 1 }}>
             <LandingPage onCTA={handleScrollToForm} />
-            <div id="home-form" className="w-full px-4 py-10">
+            <div id="home-form" className="w-full py-10 relative bg-white">
                 {/* メインカード（青） ※ <form> タグは使わない */}
-                <div className="bg-[#137FDE] rounded-[20px] px-7 py-7 flex flex-col gap-6">
+                <div className="bg-[#137FDE] rounded-[20px] px-7 py-7 flex flex-col gap-6 mx-4">
                     <h2 className="text-[#F9F9F9] font-bold text-[24px]">
                         もしもし防災を始める
                     </h2>
