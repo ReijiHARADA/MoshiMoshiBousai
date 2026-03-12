@@ -380,7 +380,7 @@ export default function Questions() {
             </div>
 
             {/* ドットインジケーター */}
-            <div className="px-5 pb-4 pt-2 flex-shrink-0">
+            <div className="px-5 pb-4 pt-2 flex-shrink-0 z-0">
                 {/* ドット */}
                 <div className="flex justify-center items-center gap-2">
                     {filteredQuestions.map((_, i) => (
