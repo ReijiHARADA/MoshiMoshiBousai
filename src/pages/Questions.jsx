@@ -274,7 +274,7 @@ export default function Questions() {
 
     return (
         <div
-            className="h-screen flex flex-col overflow-hidden"
+            className="h-screen flex flex-col overflow-hidden relative"
             style={{
                 backgroundColor: '#F5F5F5',
             }}
@@ -294,7 +294,7 @@ export default function Questions() {
             </div>
 
             {/* ===== カルーセル ===== */}
-            <div ref={containerRef} className="flex-1 overflow-hidden min-h-0">
+            <div ref={containerRef} className="flex-1 overflow-x-hidden overflow-y-visible min-h-0">
                 <div
                     className="h-full flex"
                     style={{
@@ -302,6 +302,7 @@ export default function Questions() {
                         transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)',
                         willChange: 'transform',
                         gap: `${CARD_GAP}px`,
+                        paddingBottom: '40px',
                     }}
                 >
                     {/* 質問カード群 */}
@@ -380,9 +381,9 @@ export default function Questions() {
             </div>
 
             {/* ドットインジケーター */}
-            <div className="px-5 pb-4 pt-2 flex-shrink-0 z-0">
+            <div className="absolute left-0 right-0 pointer-events-none" style={{ bottom: '16px', backgroundColor: 'transparent' }}>
                 {/* ドット */}
-                <div className="flex justify-center items-center gap-2">
+                <div className="relative z-10 flex justify-center items-center gap-2 pointer-events-auto drop-shadow-[0_8px_14px_rgba(93,93,93,0.22)]">
                     {filteredQuestions.map((_, i) => (
                         <div
                             key={i}
