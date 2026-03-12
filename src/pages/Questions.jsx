@@ -4,6 +4,7 @@ import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { QUESTIONS } from '../data/questions';
 import { ChevronRight } from 'lucide-react';
+import familyIllustration from '../assets/family.svg';
 
 export default function Questions() {
     const { roomId } = useParams();
@@ -237,15 +238,14 @@ export default function Questions() {
         <div
             className="h-screen flex flex-col overflow-hidden"
             style={{
-                backgroundColor: isOnCompletion ? '#FE7833' : '#F5F5F5',
-                transition: 'background-color 0.4s ease',
+                backgroundColor: '#F5F5F5',
             }}
         >
             {/* ヘッダー */}
             <div className="flex items-center justify-between px-5 pt-10 pb-3 flex-shrink-0">
                 <div />
                 <button type="button" onClick={handleShare}
-                    className={`flex items-center gap-1 rounded-full px-3 h-9 text-[16px] font-medium active:scale-95 transition-all ${isOnCompletion ? 'bg-white text-[#8D8D8D] hover:bg-white/90' : 'bg-[#8D8D8D] text-white hover:bg-[#7a7a7a]'}`}>
+                    className="flex items-center gap-1 rounded-full px-3 h-9 text-[16px] font-medium active:scale-95 transition-all bg-[#8D8D8D] text-white hover:bg-[#7a7a7a]">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                         <polyline points="16 6 12 2 8 6" />
@@ -305,22 +305,26 @@ export default function Questions() {
                     })}
 
                     {/* 完了スライド */}
-                    <div className="h-full flex-shrink-0 flex flex-col items-center justify-center px-6 text-center"
+                    <div className="h-full flex-shrink-0 flex flex-col pb-2 pt-2"
                         style={{ width: cardWidth || 'calc(100vw - 48px)' }}>
-                        <div className="mb-4">
-                            <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
-                                {dispTot}/{dispTot}
-                            </span>
+                        <div className="flex-1 rounded-[20px] p-5 flex flex-col shadow-xl overflow-y-auto bg-[#FE7833]">
+                            <div className="mb-4">
+                                <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
+                                    {dispTot}/{dispTot}
+                                </span>
+                            </div>
+                            <h1 className="text-[28px] font-bold text-white leading-[140%] mb-4">
+                                お疲れ様でした！
+                                <br />
+                                全{totalQuestions}問の回答が完了しました。
+                            </h1>
+                            <p className="text-white/80 text-sm leading-relaxed mb-6">
+                                あなたが考えた「もしも」の備えを、家族の回答と突き合わせてみましょう。意外なズレが見つかるかもしれません。
+                            </p>
+                            <div className="flex justify-center items-center flex-1 px-[15px]">
+                                <img src={familyIllustration} alt="完了" className="w-full object-contain" />
+                            </div>
                         </div>
-                        <h1 className="text-2xl font-bold text-white leading-relaxed mb-4">
-                            お疲れ様でした！
-                            <br />
-                            全{totalQuestions}問の回答が完了しました。
-                        </h1>
-                        <p className="text-white/80 text-sm leading-relaxed mb-8">
-                            あなたが考えた「もしも」の備えを、家族の回答と突き合わせてみましょう。意外なズレが見つかるかもしれません。
-                        </p>
-                        <img src="/Group_88.png" alt="完了" className="w-full max-w-xs object-contain mb-8" />
                     </div>
                 </div>
             </div>
@@ -345,10 +349,7 @@ export default function Questions() {
                     type="button"
                     onClick={isOnCompletion ? handleSaveAndNavigate : goNext}
                     disabled={isOnCompletion && saving}
-                    className={`w-full h-[46px] rounded-full font-bold text-[20px] shadow-[0_0_11.5px_0_rgba(93,93,93,0.50)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${isOnCompletion
-                        ? 'bg-[#F9F9F9] text-[#FE7833] hover:opacity-90'
-                        : 'bg-[#F9F9F9] text-[#137FDE] hover:opacity-90'
-                        }`}
+                    className="w-full h-[46px] rounded-full font-bold text-[20px] shadow-[0_0_11.5px_0_rgba(93,93,93,0.50)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 bg-[#F9F9F9] text-[rgba(253,120,51,1)] hover:opacity-90"
                 >
                     {isOnCompletion
                         ? (saving ? '保存中...' : '家族の回答と比較する')
