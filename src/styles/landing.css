@@ -34,7 +34,8 @@
 
 /* ---------- Column Wrapper ---------- */
 .lp-column {
-  width: var(--lp-column-width);
+  width: 100%;
+  max-width: var(--lp-column-width);
   margin: 0 auto;
   background-color: var(--lp-bg);
   min-height: 100vh;
