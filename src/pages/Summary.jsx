@@ -451,20 +451,20 @@ function SummaryCard({ card, displayText, onExpand }) {
 
     return (
         <div className="flex-1 bg-[#137FDE] rounded-[20px] flex flex-col shadow-xl overflow-hidden min-h-0">
-            <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col">
-                <div className="mb-2">
+            <div className="flex-1 overflow-y-auto px-5 pt-4 pb-0 flex flex-col min-h-0">
+                <div className="mb-2 flex-shrink-0">
                     <span className={`inline-block px-3.5 py-1.5 rounded-full text-white text-sm font-bold ${badgeBg}`}>
                         {badgeText}
                     </span>
                 </div>
 
-                <h3 className="font-bold text-white leading-[135%] mb-3 whitespace-pre-line" style={{ fontSize: 'clamp(18px, 5vw, 20px)' }}>
+                <h3 className="font-bold text-white leading-[135%] mb-3 whitespace-pre-line flex-shrink-0" style={{ fontSize: 'clamp(18px, 5vw, 20px)' }}>
                     {displayText(question.text)}
                 </h3>
 
                 {isAgreed && agreement ? (
                     /* 合意済み: 「家族」タグ + 合意内容 */
-                    <div className="flex items-start gap-3 mb-4">
+                    <div className="flex items-start gap-3 mb-4 flex-shrink-0">
                         <span className="inline-block bg-white text-stone-900 rounded-full px-2 py-0.5 text-base font-medium flex-shrink-0 border border-white">
                             家族
                         </span>
@@ -475,7 +475,7 @@ function SummaryCard({ card, displayText, onExpand }) {
                     </div>
                 ) : (
                     /* 未合意: 個人の回答リスト */
-                    <div className="space-y-3 mb-4">
+                    <div className="space-y-3 mb-4 flex-shrink-0">
                         {cohabitingAnswers.map(({ user, answerText, memoText: memo }) => (
                             <div key={user.id} className="flex items-start gap-3">
                                 <span className="inline-block bg-white text-[#137FDE] rounded-full px-2 py-0.5 text-base font-medium flex-shrink-0 border border-white">
@@ -489,37 +489,37 @@ function SummaryCard({ card, displayText, onExpand }) {
                         ))}
                     </div>
                 )}
+                
+                <p className="text-[#137FDE]/40 text-xs text-justify mt-4 leading-relaxed flex-shrink-0">
+                    答えが違っても大丈夫。いま話し合うことが、いざという時の安心に繋がります。
+                </p>
 
-                <div className="mt-auto">
-                    <button
-                        type="button"
-                        onClick={onExpand}
-                        className="w-full py-3 rounded-full bg-white text-[#137FDE] text-xl font-bold transition-all mt-2 hover:opacity-90 active:scale-[0.98] shadow-[0px_0px_11.5px_0px_rgba(93,93,93,0.50)]"
-                    >
-                        話し合って修正
-                    </button>
-
-                    <p className="text-[#137FDE]/40 text-xs text-justify mt-3 leading-relaxed">
-                        答えが違っても大丈夫。いま話し合うことが、いざという時の安心に繋がります。
-                    </p>
-
-                    <div
-                        className="mt-4 pt-3 border-t border-white/10"
-                        style={{ display: separateAnswers.length > 0 ? 'block' : 'none' }}
-                    >
-                        <p className="text-white/40 text-xs font-bold mb-2">離れて暮らす家族</p>
-                        <div className="space-y-2">
-                            {separateAnswers.map(({ user, answerText }) => (
-                                <div key={user.id} className="flex items-center gap-3">
-                                    <span className="inline-block bg-white/10 text-white/60 rounded-full px-3 py-1 text-xs font-bold flex-shrink-0">
-                                        {user.name}
-                                    </span>
-                                    <p className="text-white/60 text-sm">{answerText || '—'}</p>
-                                </div>
-                            ))}
-                        </div>
+                <div
+                    className="mt-4 pt-3 border-t border-white/10 flex-shrink-0"
+                    style={{ display: separateAnswers.length > 0 ? 'block' : 'none' }}
+                >
+                    <p className="text-white/40 text-xs font-bold mb-2">離れて暮らす家族</p>
+                    <div className="space-y-2">
+                        {separateAnswers.map(({ user, answerText }) => (
+                            <div key={user.id} className="flex items-center gap-3">
+                                <span className="inline-block bg-white/10 text-white/60 rounded-full px-3 py-1 text-xs font-bold flex-shrink-0">
+                                    {user.name}
+                                </span>
+                                <p className="text-white/60 text-sm">{answerText || '—'}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
+            </div>
+
+            <div className="px-5 pb-5 flex-shrink-0">
+                <button
+                    type="button"
+                    onClick={onExpand}
+                    className="w-full py-3 rounded-full bg-white text-[#137FDE] text-xl font-bold transition-all hover:opacity-90 active:scale-[0.98] shadow-[0px_0px_11.5px_0px_rgba(93,93,93,0.50)]"
+                >
+                    話し合って修正
+                </button>
             </div>
         </div>
     );
