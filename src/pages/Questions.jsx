@@ -56,6 +56,20 @@ export default function Questions() {
     const totalQuestions = filteredQuestions.length;
     const totalSlides = totalQuestions + 1; // +1 for completion slide
 
+    // 全問回答済みか、未回答の先頭インデックス（開発者用: 初めの質問のメモに「admin」でスキップ）
+    const { allAnswered, firstUnansweredIndex } = useMemo(() => {
+        const firstQuestion = filteredQuestions[0];
+        const adminSkip = firstQuestion && (memos[firstQuestion.id] || '').trim().toLowerCase() === 'admin';
+
+        let first = -1;
+        const all = adminSkip || filteredQuestions.every((q, i) => {
+            const hasAnswer = (answers[q.id] || '').trim().length > 0;
+            if (!hasAnswer && first < 0) first = i;
+            return hasAnswer;
+        });
+        return { allAnswered: all, firstUnansweredIndex: first >= 0 ? first : 0 };
+    }, [filteredQuestions, answers, memos]);
+
     // Refs（イベントハンドラ内で常に最新値を参照するため）
     const containerRef = useRef(null);
     const touchStartX = useRef(0);
@@ -227,6 +241,8 @@ export default function Questions() {
     };
 
     // ---------- 完了カードタップナビゲーション ----------
+    const goToFirstUnanswered = () => setCurrentIndex(firstUnansweredIndex);
+
     const handleCompletionCardClick = (e) => {
         // ボタンクリックの場合は無視
         if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
@@ -237,10 +253,12 @@ export default function Questions() {
         const cardCenter = rect.width / 2;
         
         if (clickX > cardCenter) {
-            // 右側タップ：保存して画面遷移
-            handleSaveAndNavigate();
+            if (allAnswered) {
+                handleSaveAndNavigate();
+            } else {
+                goToFirstUnanswered();
+            }
         } else {
-            // 左側タップ：前のカードへ
             goPrev();
         }
     };
@@ -364,38 +382,66 @@ export default function Questions() {
                         );
                     })}
 
-                    {/* 完了スライド */}
+                    {/* 完了スライド（全問回答済み＝オレンジ、未回答あり＝グレー） */}
                     <div className="h-full flex-shrink-0 flex flex-col py-1"
                         style={{ width: cardWidth || 'calc(100vw - 48px)' }}
                         onClick={handleCompletionCardClick}>
-                        <div className="flex-1 rounded-[20px] px-5 py-4 flex flex-col shadow-xl overflow-hidden bg-[#FE7833]">
-                            <div className="mb-3">
-                                <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
-                                    {dispTot}/{dispTot}
-                                </span>
+                        {allAnswered ? (
+                            <div className="flex-1 rounded-[20px] px-5 py-4 flex flex-col shadow-xl overflow-hidden bg-[#FE7833]">
+                                <div className="mb-3">
+                                    <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
+                                        {dispTot}/{dispTot}
+                                    </span>
+                                </div>
+                                <h1 className="font-bold text-white leading-[135%] mb-3" style={{ fontSize: 'clamp(29px, 8vw, 36px)' }}>
+                                    お疲れ様でした！
+                                    <br />
+                                    全{totalQuestions}問の回答が完了しました。
+                                </h1>
+                                <p className="text-white/80 text-sm leading-relaxed mb-4">
+                                    あなたが考えた「もしも」の備えを、家族の回答と突き合わせてみましょう。意外なズレが見つかるかもしれません。
+                                </p>
+                                <div className="flex justify-center items-center flex-1 px-[15px] mb-4">
+                                    <img src={familyIllustration} alt="完了" className="w-full object-contain" />
+                                </div>
+                                <div className="px-4">
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveAndNavigate}
+                                        disabled={saving}
+                                        className="w-full h-[50px] rounded-full font-bold text-[18px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 bg-white text-[#FE7833] hover:opacity-90"
+                                    >
+                                        {saving ? '保存中...' : '家族の回答と比較する'}
+                                    </button>
+                                </div>
                             </div>
-                            <h1 className="font-bold text-white leading-[135%] mb-3" style={{ fontSize: 'clamp(29px, 8vw, 36px)' }}>
-                                お疲れ様でした！
-                                <br />
-                                全{totalQuestions}問の回答が完了しました。
-                            </h1>
-                            <p className="text-white/80 text-sm leading-relaxed mb-4">
-                                あなたが考えた「もしも」の備えを、家族の回答と突き合わせてみましょう。意外なズレが見つかるかもしれません。
-                            </p>
-                            <div className="flex justify-center items-center flex-1 px-[15px] mb-4">
-                                <img src={familyIllustration} alt="完了" className="w-full object-contain" />
+                        ) : (
+                            <div className="flex-1 rounded-[20px] px-5 py-4 flex flex-col shadow-xl overflow-hidden bg-[#8D8D8D]">
+                                <div className="mb-3">
+                                    <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
+                                        {dispTot}/{dispTot}
+                                    </span>
+                                </div>
+                                <h1 className="font-bold text-white leading-[135%] mb-3" style={{ fontSize: 'clamp(29px, 8vw, 36px)' }}>
+                                    まだ未回答の
+                                    <br />
+                                    質問があります
+                                </h1>
+                                <p className="text-white/80 text-sm leading-relaxed mb-4">
+                                    すべての質問に答えると、家族の回答と比較できます。未回答の質問から順に進めましょう。
+                                </p>
+                                <div className="flex-1 min-h-[80px]" />
+                                <div className="px-4">
+                                    <button
+                                        type="button"
+                                        onClick={goToFirstUnanswered}
+                                        className="w-full h-[50px] rounded-full font-bold text-[18px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 bg-white text-[#5a5a5a] hover:opacity-90"
+                                    >
+                                        未回答の質問に戻る
+                                    </button>
+                                </div>
                             </div>
-                            <div className="px-4">
-                                <button
-                                    type="button"
-                                    onClick={handleSaveAndNavigate}
-                                    disabled={saving}
-                                    className="w-full h-[50px] rounded-full font-bold text-[18px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 bg-white text-[#FE7833] hover:opacity-90"
-                                >
-                                    {saving ? '保存中...' : '家族の回答と比較する'}
-                                </button>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
