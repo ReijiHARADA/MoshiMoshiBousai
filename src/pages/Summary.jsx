@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useLocation } from 'react-router-dom';
-import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useRealtimeCollection } from '../hooks/useRealtimeCollection';
 import { useSwipeCarousel } from '../hooks/useSwipeCarousel';
 import { shareRoom } from '../lib/share';
 import { QUESTIONS } from '../data/questions';
@@ -22,9 +23,10 @@ export default function Summary() {
     const fromQuestions = location.state?.fromQuestions ?? false;
     const [hasEntered, setHasEntered] = useState(!fromQuestions);
 
-    const [users, setUsers] = useState([]);
-    const [answers, setAnswers] = useState([]);
-    const [agreements, setAgreements] = useState([]);
+    const { data: users } = useRealtimeCollection('users', [['roomId', '==', roomId]]);
+    const { data: answers } = useRealtimeCollection('answers', [['roomId', '==', roomId]]);
+    const { data: agreements } = useRealtimeCollection('agreements', [['roomId', '==', roomId]]);
+
     const [expandedCard, setExpandedCard] = useState(null);
     const [overlayState, setOverlayState] = useState('closed'); // 'closed' | 'opening' | 'open' | 'closing'
     const [targetRect, setTargetRect] = useState(/** @type {{ top: number; left: number; width: number; height: number } | null} */ (null));
@@ -82,14 +84,7 @@ export default function Summary() {
         if (indexToRestore !== null && indexToRestore !== undefined) {
             setCurrentIndex(indexToRestore);
         }
-        const pending = pendingAgreementRef.current;
-        if (pending) {
-            pendingAgreementRef.current = null;
-            setAgreements((prev) => {
-                const filtered = prev.filter((a) => a.id !== pending.id);
-                return [...filtered, pending];
-            });
-        }
+        pendingAgreementRef.current = null;
         setSuppressTrackTransition(true);
         setChromeInstantShow(true);
         setShowChrome(true);
@@ -106,19 +101,6 @@ export default function Summary() {
             return () => cancelAnimationFrame(id);
         }
     }, [fromQuestions]);
-
-    // ---------- Firestore ----------
-    useEffect(() => {
-        const usersQ = query(collection(db, 'users'), where('roomId', '==', roomId));
-        const answersQ = query(collection(db, 'answers'), where('roomId', '==', roomId));
-        const agreementsQ = query(collection(db, 'agreements'), where('roomId', '==', roomId));
-
-        const unsub1 = onSnapshot(usersQ, (snap) => setUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
-        const unsub2 = onSnapshot(answersQ, (snap) => setAnswers(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
-        const unsub3 = onSnapshot(agreementsQ, (snap) => setAgreements(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
-
-        return () => { unsub1(); unsub2(); unsub3(); };
-    }, [roomId]);
 
     const cohabitingUsers = useMemo(() => users.filter((u) => u.isCohabiting !== false), [users]);
     const separateUsers = useMemo(() => users.filter((u) => u.isCohabiting === false), [users]);
