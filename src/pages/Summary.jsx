@@ -273,7 +273,7 @@ export default function Summary() {
             >
                 <div
                     className="flex items-center gap-3 rounded-full px-3 h-9"
-                    style={{ backgroundColor: '#FE7833' }}
+                    style={{ backgroundColor: agreedCount >= totalCount ? '#1E1E1E' : '#FE7833' }}
                 >
                     <span className="text-[#F9F9F9] font-medium text-[16px]">合意数</span>
                     <span className="text-[#F9F9F9] font-bold text-[20px]">{agreedCount}/{totalCount}</span>
@@ -453,7 +453,7 @@ function IndividualCard({ card, users, displayText }) {
 // ========== カルーセル内のカード（非展開時）==========
 function SummaryCard({ card, displayText, onExpand }) {
     const { question, cohabitingAnswers, separateAnswers, agreement, isAgreed } = card;
-    const badgeBg = isAgreed ? 'bg-[#33C859]' : 'bg-stone-900';
+    const badgeBg = isAgreed ? 'bg-[#1E1E1E]' : 'bg-[#FE7833]';
     const badgeText = isAgreed ? '合意済' : '✗ 未一致';
 
     return (
@@ -626,7 +626,7 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
     if (!displayCard && !isAnimatingOut && !isClosing) return null;
 
     const { question, cohabitingAnswers, isAgreed, agreement } = displayCard || {};
-    const badgeBg = isAgreed ? 'bg-[#33C859]' : 'bg-[#FE7833]';
+    const badgeBg = isAgreed ? 'bg-[#1E1E1E]' : 'bg-[#FE7833]';
     const badgeText = isAgreed ? '✓ 合意済' : '不一致';
 
     const handleAgree = async () => {
