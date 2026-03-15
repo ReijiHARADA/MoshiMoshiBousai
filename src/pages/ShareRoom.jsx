@@ -1,39 +1,28 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { Copy, Check, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
+import { buildRoomUrl, copyText } from '../lib/share';
 
 export default function ShareRoom() {
     const { roomId } = useParams();
     const navigate = useNavigate();
     const [copied, setCopied] = useState(false);
 
-    const shareUrl = `${window.location.origin}/join/${roomId}`;
+    const shareUrl = buildRoomUrl(roomId);
 
     const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(shareUrl);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch {
-            // フォールバック
-            const input = document.createElement('input');
-            input.value = shareUrl;
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
+        const ok = await copyText(shareUrl);
+        if (ok) {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         }
     };
 
     const handleCopyId = async () => {
-        try {
-            await navigator.clipboard.writeText(roomId);
+        const ok = await copyText(roomId);
+        if (ok) {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
-        } catch {
-            /* ignore */
         }
     };
 

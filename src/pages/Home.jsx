@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { createClientId } from '../lib/createClientId';
+import { buildRoomUrl, shareRoom } from '../lib/share';
 import { MapPin, BadgeCheck, Info, Share } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import LandingPage from './LandingPage';
@@ -99,32 +100,14 @@ export default function Home() {
         }
     };
 
-    const shareUrl = `${window.location.origin}/join/${createdRoomId}`;
+    const shareUrl = buildRoomUrl(createdRoomId);
 
     const handleShareLink = async () => {
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: 'もしもし防災 - ルーム招待',
-                    url: shareUrl,
-                });
-                return;
-            } catch {
-                // share cancelled, fall through to clipboard
-            }
+        const result = await shareRoom(createdRoomId, { title: 'もしもし防災 - ルーム招待' });
+        if (result.copied) {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
         }
-        try {
-            await navigator.clipboard.writeText(shareUrl);
-        } catch {
-            const input = document.createElement('input');
-            input.value = shareUrl;
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-        }
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
     };
 
     const handleGoToQuestions = () => {

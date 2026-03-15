@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useParams, useLocation } from 'react-router-dom';
 import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { shareRoom } from '../lib/share';
 import { QUESTIONS } from '../data/questions';
 import { Phone, MessageSquare, Package, MapPin, PawPrint, Baby, Heart, ClipboardList, X, Download, Printer } from 'lucide-react';
 import { toPng } from 'html-to-image';
@@ -279,16 +280,11 @@ export default function Summary() {
 
     // ---------- 共有 ----------
     const handleShare = async () => {
-        const shareUrl = `${window.location.origin}/join/${roomId}`;
-        if (navigator.share) {
-            try { await navigator.share({ title: 'もしもし防災', url: shareUrl }); return; } catch { /* */ }
+        const result = await shareRoom(roomId);
+        if (result.copied) {
+            setShowCopied(true);
+            setTimeout(() => setShowCopied(false), 2000);
         }
-        try { await navigator.clipboard.writeText(shareUrl); } catch {
-            const i = document.createElement('input'); i.value = shareUrl;
-            document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
-        }
-        setShowCopied(true);
-        setTimeout(() => setShowCopied(false), 2000);
     };
 
     // ---------- カードタップナビゲーション ----------
