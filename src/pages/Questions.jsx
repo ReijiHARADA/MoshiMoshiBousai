@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSwipeCarousel } from '../hooks/useSwipeCarousel';
 import { shareRoom } from '../lib/share';
+import { haptics } from '../lib/haptics';
 import { resolveQuestionText } from '../features/questions/utils/resolveQuestionText';
 import { useQuestionSession } from '../features/questions/hooks/useQuestionSession';
 import { useQuestionTitleMeasure } from '../features/questions/hooks/useQuestionTitleMeasure';
@@ -67,7 +68,10 @@ export default function Questions() {
         else goPrev();
     };
 
-    const goToFirstUnanswered = () => setCurrentIndex(firstUnansweredIndex);
+    const goToFirstUnanswered = () => {
+        haptics.returnToUnanswered();
+        setCurrentIndex(firstUnansweredIndex);
+    };
 
     const handleCompletionCardClick = (e) => {
         if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;

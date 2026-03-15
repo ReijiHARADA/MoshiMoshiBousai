@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useParams, useLocation } from 'react-router-dom';
 import { useSwipeCarousel } from '../hooks/useSwipeCarousel';
 import { shareRoom } from '../lib/share';
+import { haptics } from '../lib/haptics';
 import { useSummaryData } from '../features/summary/hooks/useSummaryData';
 import { useSummaryCards } from '../features/summary/hooks/useSummaryCards';
 import { SummaryCarousel } from '../features/summary/components/SummaryCarousel';
@@ -114,6 +115,11 @@ export default function Summary() {
         goPrev,
     } = useSwipeCarousel({ itemCount: totalCount, disableDragRef: expandedRef });
 
+    const handleOpenSheetModal = () => {
+        haptics.success();
+        setShowSheetModal(true);
+    };
+
     const handleShare = async () => {
         const result = await shareRoom(roomId);
         if (result.copied) {
@@ -199,7 +205,7 @@ export default function Summary() {
                 currentIndex={currentIndex}
                 indicatorColor={indicatorColor}
                 canCreateSheet={canCreateSheet}
-                onOpenSheetModal={() => setShowSheetModal(true)}
+                onOpenSheetModal={handleOpenSheetModal}
             />
 
             {typeof document !== 'undefined' && document.body && overlayState !== 'closed' && createPortal(

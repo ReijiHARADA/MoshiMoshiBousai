@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../../lib/session';
 import { getRoomById } from '../../../lib/rooms';
 import { saveAnswers } from '../../../lib/answers';
+import { haptics } from '../../../lib/haptics';
 import { QUESTIONS } from '../../../data/questions';
 
 /**
@@ -58,6 +59,9 @@ export function useQuestionSession(roomId) {
     const handleMemoChange = (qId, val) => setMemos((p) => ({ ...p, [qId]: val }));
 
     const handleSaveAndNavigate = async () => {
+        // 実機では振動APIが「ユーザー操作の同期処理内」でないと発火しないため、
+        // await の前にタップ直後で success を鳴らす
+        haptics.success();
         setSaving(true);
         try {
             const userId = currentUser.id;
@@ -68,6 +72,7 @@ export function useQuestionSession(roomId) {
             }, 200);
         } catch (err) {
             console.error('回答保存エラー:', err);
+            haptics.error();
             alert('回答の保存に失敗しました。');
         } finally {
             setSaving(false);
