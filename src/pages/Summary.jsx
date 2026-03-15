@@ -354,7 +354,7 @@ export default function Summary() {
             {/* ===== ヘッダー ===== */}
             <div
                 className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0 transition-all duration-300"
-                style={{ opacity: showChrome ? 1 : 0, pointerEvents: showChrome ? 'auto' : 'none', transition: chromeInstantShow ? 'none' : undefined }}
+                style={{ opacity: showChrome ? 1 : 0, pointerEvents: showChrome ? 'auto' : 'none' }}
             >
                 <div
                     className="flex items-center gap-3 rounded-full px-3 h-9"
@@ -423,8 +423,7 @@ export default function Summary() {
                     bottom: '16px',
                     opacity: showChrome ? 1 : 0,
                     pointerEvents: showChrome ? 'auto' : 'none',
-                    backgroundColor: 'transparent',
-                    transition: chromeInstantShow ? 'none' : undefined
+                    backgroundColor: 'transparent'
                 }}
             >
                 {/* ドットインジケーター（表示中のカードが個別＝青緑、共通＝青） */}
