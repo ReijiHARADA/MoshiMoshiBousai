@@ -12,6 +12,7 @@ const PATTERNS = {
   ],
   success: 'success',
   subtle: [{ duration: 20, intensity: 0.4 }],
+  cardChange: [{ duration: 40 }],
 };
 
 async function safeTrigger(input) {
@@ -27,4 +28,5 @@ export const haptics = {
   success: () => safeTrigger(PATTERNS.success),
   subtle: () => safeTrigger(PATTERNS.subtle),
   error: () => safeTrigger('error'),
+  cardChange: () => safeTrigger(PATTERNS.cardChange),
 };

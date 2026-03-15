@@ -5,6 +5,8 @@ const CARD_GAP_DEFAULT = 12;
 const SWIPE_THRESHOLD = 50;
 const DIRECTION_LOCK_THRESHOLD = 5;
 const EDGE_RESISTANCE = 0.25;
+/** トラックの transform トランジション時間（0.35s）に合わせ、カードが中央に収まった頃に onCardChange を発火する */
+const SETTLE_MS = 350;
 
 /**
  * 横スワイプ／ドラッグでインデックスを切り替えるカルーセルの土台ロジック。
@@ -16,6 +18,7 @@ const EDGE_RESISTANCE = 0.25;
  * @param {number} [options.cardGap=12] - カード間のギャップ（px）
  * @param {React.MutableRefObject<unknown>} [options.disableDragRef] - ref.current が truthy の間はドラッグを無効にする（例: オーバーレイ展開中）
  * @param {boolean} [options.lockScroll=true] - html/body の overflow を hidden にするか
+ * @param {() => void} [options.onCardChange] - カードが中央に収まったタイミング（トランジション 0.35s 後）で呼ぶコールバック。タップ・スワイプ共通
  * @returns {{
  *   containerRef: React.RefObject<HTMLDivElement | null>,
  *   currentIndex: number,
@@ -39,6 +42,7 @@ export function useSwipeCarousel(options) {
         cardGap = CARD_GAP_DEFAULT,
         disableDragRef = null,
         lockScroll = true,
+        onCardChange = null,
     } = options;
 
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -53,10 +57,22 @@ export function useSwipeCarousel(options) {
     const isDraggingRef = useRef(false);
     const dragOffsetRef = useRef(0);
     const currentIndexRef = useRef(0);
+    const cardChangeTimeoutRef = useRef(null);
+    const onCardChangeRef = useRef(onCardChange);
 
     useEffect(() => {
         currentIndexRef.current = currentIndex;
     }, [currentIndex]);
+
+    useEffect(() => {
+        onCardChangeRef.current = onCardChange;
+    }, [onCardChange]);
+
+    useEffect(() => {
+        return () => {
+            if (cardChangeTimeoutRef.current) clearTimeout(cardChangeTimeoutRef.current);
+        };
+    }, []);
 
     // ---------- スクロール抑制 ----------
     useEffect(() => {
@@ -123,6 +139,14 @@ export function useSwipeCarousel(options) {
             setDragOffset(offset);
         };
 
+        const scheduleCardChangeHaptic = () => {
+            if (cardChangeTimeoutRef.current) clearTimeout(cardChangeTimeoutRef.current);
+            cardChangeTimeoutRef.current = setTimeout(() => {
+                onCardChangeRef.current?.();
+                cardChangeTimeoutRef.current = null;
+            }, SETTLE_MS);
+        };
+
         const endDrag = () => {
             if (!isDraggingRef.current) return;
             isDraggingRef.current = false;
@@ -133,8 +157,10 @@ export function useSwipeCarousel(options) {
             const maxIdx = Math.max(0, itemCount - 1);
             if (offset < -SWIPE_THRESHOLD && idx < maxIdx) {
                 setCurrentIndex((p) => p + 1);
+                scheduleCardChangeHaptic();
             } else if (offset > SWIPE_THRESHOLD && idx > 0) {
                 setCurrentIndex((p) => p - 1);
+                scheduleCardChangeHaptic();
             }
             dragOffsetRef.current = 0;
             setDragOffset(0);
@@ -176,11 +202,25 @@ export function useSwipeCarousel(options) {
     const stepSize = cardWidth + cardGap;
     const trackTranslatePx = peek - currentIndex * stepSize + dragOffset;
 
+    const scheduleCardChangeHaptic = () => {
+        if (cardChangeTimeoutRef.current) clearTimeout(cardChangeTimeoutRef.current);
+        cardChangeTimeoutRef.current = setTimeout(() => {
+            onCardChangeRef.current?.();
+            cardChangeTimeoutRef.current = null;
+        }, SETTLE_MS);
+    };
+
     const goNext = () => {
-        if (currentIndex < itemCount - 1) setCurrentIndex((p) => p + 1);
+        if (currentIndex < itemCount - 1) {
+            setCurrentIndex((p) => p + 1);
+            scheduleCardChangeHaptic();
+        }
     };
     const goPrev = () => {
-        if (currentIndex > 0) setCurrentIndex((p) => p - 1);
+        if (currentIndex > 0) {
+            setCurrentIndex((p) => p - 1);
+            scheduleCardChangeHaptic();
+        }
     };
 
     return {

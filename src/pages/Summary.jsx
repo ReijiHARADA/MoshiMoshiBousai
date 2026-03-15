@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useLocation } from 'react-router-dom';
 import { useSwipeCarousel } from '../hooks/useSwipeCarousel';
@@ -102,6 +102,8 @@ export default function Summary() {
         }
     }, [fromQuestions]);
 
+    const onCardChange = useCallback(() => haptics.cardChange(), []);
+
     const {
         containerRef,
         currentIndex,
@@ -113,7 +115,11 @@ export default function Summary() {
         cardGap,
         goNext,
         goPrev,
-    } = useSwipeCarousel({ itemCount: totalCount, disableDragRef: expandedRef });
+    } = useSwipeCarousel({
+        itemCount: totalCount,
+        disableDragRef: expandedRef,
+        onCardChange,
+    });
 
     const handleOpenSheetModal = () => {
         haptics.success();

@@ -30,6 +30,8 @@ export default function Questions() {
     const totalQuestions = filteredQuestions.length;
     const totalSlides = totalQuestions + 1;
 
+    const onCardChange = useCallback(() => haptics.cardChange(), []);
+
     const {
         containerRef,
         currentIndex,
@@ -41,7 +43,10 @@ export default function Questions() {
         cardGap,
         goNext,
         goPrev,
-    } = useSwipeCarousel({ itemCount: totalSlides });
+    } = useSwipeCarousel({
+        itemCount: totalSlides,
+        onCardChange,
+    });
 
     const titleMinHeight = useQuestionTitleMeasure(
         rulerRef,
