@@ -202,14 +202,14 @@ export default function Summary() {
     if (totalCount === 0) {
         return (
             <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center">
-                <p className="text-[#8D8D8D] text-sm">読み込み中...</p>
+                <p className="text-disabled text-sm">読み込み中...</p>
             </div>
         );
     }
 
     const currentCard = expandedCard !== null ? questionCards[expandedCard] : null;
     const displayedCard = questionCards[currentIndex];
-    const indicatorColor = displayedCard?.isIndividual ? '#0EB09F' : '#137FDE';
+    const indicatorColor = displayedCard?.isIndividual ? 'var(--color-success)' : 'var(--color-primary)';
 
     return (
         <div
@@ -377,7 +377,7 @@ function IndividualCard({ card, users, displayText }) {
     const allAnswers = [...cohabitingAnswers, ...separateAnswers];
 
     return (
-        <div className="flex-1 bg-[#0EB09F] rounded-[20px] flex flex-col shadow-xl overflow-hidden min-h-0">
+        <div className="flex-1 bg-success rounded-card flex flex-col shadow-xl overflow-hidden min-h-0">
             <div className="flex-1 overflow-y-auto px-5 py-4">
                 <h3 className="font-bold text-white leading-[135%] mb-3 whitespace-pre-line" style={{ fontSize: 'clamp(18px, 5vw, 20px)' }}>
                     {displayText(question.text)}
@@ -386,14 +386,14 @@ function IndividualCard({ card, users, displayText }) {
                 <div className="space-y-3">
                     {allAnswers.map(({ user, answerText, memoText: memo }) => (
                         <div key={user.id} className="bg-white rounded-xl px-4 py-3 flex items-start gap-3 shadow-sm">
-                            <span className="inline-flex justify-center items-center bg-[#0EB09F] text-white rounded-full px-3 py-1 text-sm font-bold flex-shrink-0">
+                            <span className="inline-flex justify-center items-center bg-success text-white rounded-pill px-3 py-1 text-sm font-bold flex-shrink-0">
                                 {user.name}
                             </span>
                             <div className="flex-1 min-w-0 pt-0.5 flex flex-col">
-                                <p className="text-[#0EB09F] font-bold text-sm leading-snug">{user.location || user.attributes?.location || '—'}</p>
-                                <p className="text-[#0EB09F] text-base leading-none my-1">↓</p>
-                                <p className="text-[#0EB09F] font-bold text-base leading-snug">{answerText || '—'}</p>
-                                {memo && <p className="text-[#0EB09F]/60 text-xs mt-2 leading-relaxed font-medium">{memo}</p>}
+                                <p className="text-success font-bold text-sm leading-snug">{user.location || user.attributes?.location || '—'}</p>
+                                <p className="text-success text-base leading-none my-1">↓</p>
+                                <p className="text-success font-bold text-base leading-snug">{answerText || '—'}</p>
+                                {memo && <p className="text-success/60 text-xs mt-2 leading-relaxed font-medium">{memo}</p>}
                             </div>
                         </div>
                     ))}
@@ -406,13 +406,13 @@ function IndividualCard({ card, users, displayText }) {
 // ========== カルーセル内のカード（非展開時）==========
 function SummaryCard({ card, displayText, onExpand, cardRef }) {
     const { question, cohabitingAnswers, separateAnswers, agreement, isAgreed } = card;
-    const badgeBg = isAgreed ? 'bg-[#1E1E1E]' : 'bg-[#FE7833]';
+    const badgeBg = isAgreed ? 'bg-dark' : 'bg-accent';
     const badgeText = isAgreed ? '合意済' : '✗ 未一致';
 
     return (
         <div
             ref={cardRef}
-            className="flex-1 bg-[#137FDE] rounded-[20px] flex flex-col shadow-xl overflow-hidden min-h-0"
+            className="flex-1 bg-primary rounded-card flex flex-col shadow-xl overflow-hidden min-h-0"
         >
             <div className="flex-1 overflow-y-auto px-5 pt-4 pb-0 flex flex-col min-h-0">
                 <div className="mb-2 flex-shrink-0">
@@ -441,7 +441,7 @@ function SummaryCard({ card, displayText, onExpand, cardRef }) {
                     <div className="space-y-3 mb-4 flex-shrink-0">
                         {cohabitingAnswers.map(({ user, answerText, memoText: memo }) => (
                             <div key={user.id} className="flex items-start gap-3">
-                                <span className="inline-block bg-white text-[#137FDE] rounded-full px-2 py-0.5 text-base font-medium flex-shrink-0 border border-white">
+                                <span className="inline-block bg-white text-primary rounded-pill px-2 py-0.5 text-base font-medium flex-shrink-0 border border-white">
                                     {user.name}
                                 </span>
                                 <div className="flex-1 min-w-0 pt-0.5">
@@ -453,7 +453,7 @@ function SummaryCard({ card, displayText, onExpand, cardRef }) {
                     </div>
                 )}
                 
-                <p className="text-[#137FDE]/40 text-xs text-justify mt-4 leading-relaxed flex-shrink-0">
+                <p className="text-primary/40 text-xs text-justify mt-4 leading-relaxed flex-shrink-0">
                     答えが違っても大丈夫。いま話し合うことが、いざという時の安心に繋がります。
                 </p>
 
@@ -479,7 +479,7 @@ function SummaryCard({ card, displayText, onExpand, cardRef }) {
                 <button
                     type="button"
                     onClick={onExpand}
-                    className="w-full py-3 rounded-full bg-white text-[#137FDE] text-xl font-bold transition-all hover:opacity-90 active:scale-[0.98] shadow-[0px_0px_11.5px_0px_rgba(93,93,93,0.50)]"
+                    className="w-full py-3 rounded-pill bg-white text-primary text-xl font-bold transition-all hover:opacity-90 active:scale-[0.98] shadow-button"
                 >
                     話し合って修正
                 </button>
@@ -507,7 +507,7 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
     useEffect(() => {
         const meta = document.querySelector('meta[name="theme-color"]');
         if (!meta) return;
-        if (overlayState !== 'closed') meta.setAttribute('content', '#137FDE');
+        if (overlayState !== 'closed') meta.setAttribute('content', 'var(--color-primary)');
         return () => meta.setAttribute('content', '#F5F5F5');
     }, [overlayState]);
 
@@ -517,8 +517,8 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
         const body = document.body;
         const prevHtml = html.style.backgroundColor;
         const prevBody = body.style.backgroundColor;
-        html.style.backgroundColor = '#137FDE';
-        body.style.backgroundColor = '#137FDE';
+        html.style.backgroundColor = 'var(--color-primary)';
+        body.style.backgroundColor = 'var(--color-primary)';
         return () => {
             html.style.backgroundColor = prevHtml;
             body.style.backgroundColor = prevBody;
@@ -540,7 +540,7 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
     if (overlayState === 'closed') return null;
 
     const { question, cohabitingAnswers, isAgreed, agreement } = displayCard || {};
-    const badgeBg = isAgreed ? 'bg-[#1E1E1E]' : 'bg-[#FE7833]';
+    const badgeBg = isAgreed ? 'bg-dark' : 'bg-accent';
     const badgeText = isAgreed ? '✓ 合意済' : '不一致';
 
     const handleAgree = async () => {
@@ -595,7 +595,7 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
 
     return (
         <div
-            className="fixed overflow-hidden bg-[#137FDE] z-40 flex flex-col"
+            className="fixed overflow-hidden bg-primary z-40 flex flex-col"
             style={{
                 ...shellStyle,
                 transition:
@@ -635,7 +635,7 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
                                 e.stopPropagation();
                                 onClose();
                             }}
-                            className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-[#137FDE] text-xl font-semibold hover:bg-white/90 transition-all"
+                            className="w-9 h-9 flex items-center justify-center rounded-pill bg-white text-primary text-xl font-semibold hover:bg-white/90 transition-all"
                         >
                             ✕
                         </button>
@@ -671,16 +671,16 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
                                     大規模災害が発生し、被災地への電話が繋がりにくい状態になった際に提供される「声の録音・再生サービス」です。
                                 </p>
                                 <div className="flex flex-col gap-4">
-                                    <span className="inline-flex items-center justify-center w-14 h-6 bg-[#137FDE] rounded-full text-white text-sm font-bold">STEP1</span>
-                                    <p className="text-[#137FDE] text-xl font-bold">「171」に電話をかける</p>
+                                    <span className="inline-flex items-center justify-center w-14 h-6 bg-primary rounded-pill text-white text-sm font-bold">STEP1</span>
+                                    <p className="text-primary text-xl font-bold">「171」に電話をかける</p>
                                     <p className="text-neutral-400 text-xs font-medium leading-4 text-justify">音声ガイダンスが流れます</p>
 
-                                    <span className="inline-flex items-center justify-center w-14 h-6 bg-[#137FDE] rounded-full text-white text-sm font-bold">STEP2</span>
-                                    <p className="text-[#137FDE] text-xl font-bold">「録音」か「再生」を選ぶ</p>
+                                    <span className="inline-flex items-center justify-center w-14 h-6 bg-primary rounded-pill text-white text-sm font-bold">STEP2</span>
+                                    <p className="text-primary text-xl font-bold">「録音」か「再生」を選ぶ</p>
                                     <p className="text-neutral-400 text-xs font-medium leading-4 text-justify">録音したい場合：「1」を押す<br />聞きたい場合：「2」を押す</p>
 
-                                    <span className="inline-flex items-center justify-center w-14 h-6 bg-[#137FDE] rounded-full text-white text-sm font-bold">STEP3</span>
-                                    <p className="text-[#137FDE] text-xl font-bold">電話番号を入力する</p>
+                                    <span className="inline-flex items-center justify-center w-14 h-6 bg-primary rounded-pill text-white text-sm font-bold">STEP3</span>
+                                    <p className="text-primary text-xl font-bold">電話番号を入力する</p>
                                     <p className="text-neutral-400 text-xs font-medium leading-4 text-justify">伝言を伝えたい方の電話番号を入力し、メッセージを録音・確認します。</p>
                                 </div>
                                 <img src={tips3Svg} alt="スマートフォン" className="w-full h-auto mt-4 rounded-lg" />
@@ -701,22 +701,22 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
                                 <div className="flex flex-col gap-6">
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-1">
-                                            <span className="w-5 h-5 bg-[#137FDE] rounded-full flex items-center justify-center text-white text-xs font-bold">1</span>
-                                            <span className="text-[#137FDE] text-base font-bold">暗闇でも迷わず手に取れるか</span>
+                                            <span className="w-5 h-5 bg-primary rounded-pill flex items-center justify-center text-white text-xs font-bold">1</span>
+                                            <span className="text-primary text-base font-bold">暗闇でも迷わず手に取れるか</span>
                                         </div>
                                         <p className="text-neutral-400 text-xs font-medium leading-5 text-justify">手探りでもすぐに見つけられる場所か、また、取り出すまでに障害物がないかを確認しましょう。</p>
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-1">
-                                            <span className="w-5 h-5 bg-[#137FDE] rounded-full flex items-center justify-center text-white text-xs font-bold">2</span>
-                                            <span className="text-[#137FDE] text-base font-bold">「一人で持ち出せる重さ」か</span>
+                                            <span className="w-5 h-5 bg-primary rounded-pill flex items-center justify-center text-white text-xs font-bold">2</span>
+                                            <span className="text-primary text-base font-bold">「一人で持ち出せる重さ」か</span>
                                         </div>
                                         <p className="text-neutral-400 text-xs font-medium leading-5 text-justify">各自の体力に合わせた重さに分け、全員が『自分の袋』を把握しておくことが重要です。</p>
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-1">
-                                            <span className="w-5 h-5 bg-[#137FDE] rounded-full flex items-center justify-center text-white text-xs font-bold">3</span>
-                                            <span className="text-[#137FDE] text-base font-bold">玄関までの動線を確認</span>
+                                            <span className="w-5 h-5 bg-primary rounded-pill flex items-center justify-center text-white text-xs font-bold">3</span>
+                                            <span className="text-primary text-base font-bold">玄関までの動線を確認</span>
                                         </div>
                                         <p className="text-neutral-400 text-xs font-medium leading-5 text-justify">避難の最終ラインである玄関扉のすぐ横など、逃げながら無理なく掌める場所が理想的です。</p>
                                     </div>
@@ -743,7 +743,7 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
                             </div>
                         ) : (
                             /* === 避難所の種類 Tips (その他) === */
-                            <div className="bg-[#F9F9F9] rounded-lg p-4 mb-6">
+                            <div className="bg-surface rounded-input p-4 mb-6">
                                 <h4 className="font-bold text-stone-900 text-xl mb-1">避難所の種類</h4>
                                 <p className="text-neutral-400 text-xs font-medium leading-4 text-justify mb-4">
                                     指定緊急避難場所と指定避難所の違いを理解して場所を選びましょう。
@@ -782,7 +782,7 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
                                 value={agreedText}
                                 onChange={(e) => setAgreedText(e.target.value)}
                                 placeholder="南小学校"
-                                className="w-full px-4 py-2.5 rounded-lg bg-[#F9F9F9] text-stone-900 placeholder-stone-300 text-base font-medium focus:outline-none transition-all"
+                                className="w-full px-4 py-2.5 rounded-input bg-surface text-stone-900 placeholder-stone-300 text-base font-medium focus:outline-none transition-all"
                             />
                         </div>
 
@@ -792,7 +792,7 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
                                 onChange={(e) => setMemoText(e.target.value)}
                                 placeholder={"\u30E1\u30E2\u7528\u6B04\n\u4F8B\uFF09\u6D25\u6CE2\u304C\u6765\u305F\u3089\u3001\u907F\u96E3\u6240\u306B\u5411\u304B\u308F\u305A\u8FD1\u304F\u306E\u30DE\u30F3\u30B7\u30E7\u30F3\u306B\u9003\u3052\u8FBC\u3080"}
                                 rows={3}
-                                className="w-full bg-transparent text-[#137FDE] text-base font-medium placeholder-[#137FDE]/50 focus:outline-none resize-none leading-6"
+                                className="w-full bg-transparent text-primary text-base font-medium placeholder-primary/50 focus:outline-none resize-none leading-6"
                             />
                         </div>
 
@@ -800,7 +800,7 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
                             type="button"
                             onClick={handleAgree}
                             disabled={saving}
-                            className="w-full py-3 rounded-full bg-[#FE7833] text-white font-bold text-2xl shadow-lg hover:bg-[#e56a2a] active:scale-[0.98] transition-all disabled:opacity-50"
+                            className="w-full py-3 rounded-pill bg-accent text-white font-bold text-2xl shadow-lg hover:bg-accent-hover active:scale-[0.98] transition-all disabled:opacity-50"
                         >
                             {saving ? '保存中...' : '全員で合意した'}
                         </button>
@@ -1266,7 +1266,7 @@ function SheetModal({ onClose, questionCards, agreements, answers, users, cohabi
                     type="button"
                     onClick={handleSave}
                     disabled={saving}
-                    className="w-full py-4 rounded-full bg-[#137FDE] text-white font-bold text-lg shadow-lg hover:bg-[#0e6bbd] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-pill bg-primary text-white font-bold text-lg shadow-lg hover:bg-primary-hover active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                     <Download className="w-5 h-5" />
                     {saving ? '保存中...' : '写真に保存'}
@@ -1274,7 +1274,7 @@ function SheetModal({ onClose, questionCards, agreements, answers, users, cohabi
                 <button
                     type="button"
                     onClick={handlePrint}
-                    className="w-full py-4 rounded-full bg-[#137FDE] text-white font-bold text-lg shadow-lg hover:bg-[#0e6bbd] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-pill bg-primary text-white font-bold text-lg shadow-lg hover:bg-primary-hover active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
                     <Printer className="w-5 h-5" />
                     印刷

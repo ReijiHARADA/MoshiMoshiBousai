@@ -134,7 +134,7 @@ export default function Home() {
                     <BlueFormCard title="もしもし防災を始める">
                         <div className="flex flex-col gap-9">
                             <FieldBlock
-                                icon={<BadgeCheck size={20} className="text-[#F9F9F9]" />}
+                                icon={<BadgeCheck size={20} className="text-on-primary" />}
                                 label="名前"
                                 description="アプリ内での表示名です。お互いを識別しやすい名前を自由につけてください。"
                             >
@@ -146,7 +146,7 @@ export default function Home() {
                             </FieldBlock>
 
                             <FieldBlock
-                                icon={<MapPin size={20} className="text-[#F9F9F9]" />}
+                                icon={<MapPin size={20} className="text-on-primary" />}
                                 label="よくいる場所"
                                 description="災害は家にいる時に起こるとは限りません。学校や職場など、日中の主な居場所を入力しましょう。"
                             >
@@ -158,7 +158,7 @@ export default function Home() {
                             </FieldBlock>
 
                             <FieldBlock
-                                icon={<Info size={20} className="text-[#F9F9F9]" />}
+                                icon={<Info size={20} className="text-on-primary" />}
                                 label="一緒に住んでいる家族"
                                 description="避難時の「誰が助ける？」をあいまいにしないために、支援が必要なご家族を教えてください。"
                             >
@@ -169,8 +169,8 @@ export default function Home() {
                                             className="flex items-center gap-2.5 cursor-pointer py-1 -mx-2 px-2 rounded-lg active:bg-white/10 transition-colors"
                                         >
                                             <div
-                                                className={`w-5 h-5 rounded-sm border-2 border-[#F9F9F9] flex items-center justify-center flex-shrink-0 transition-colors ${attributes[key]
-                                                    ? 'bg-[#F9F9F9]'
+                                                className={`w-5 h-5 rounded-sm border-2 border-on-primary flex items-center justify-center flex-shrink-0 transition-colors text-primary ${attributes[key]
+                                                    ? 'bg-on-primary'
                                                     : 'bg-transparent'
                                                     }`}
                                             >
@@ -183,7 +183,7 @@ export default function Home() {
                                                     >
                                                         <path
                                                             d="M1 4L3.5 6.5L9 1"
-                                                            stroke="#137FDE"
+                                                            className="stroke-primary"
                                                             strokeWidth="2"
                                                             strokeLinecap="round"
                                                             strokeLinejoin="round"

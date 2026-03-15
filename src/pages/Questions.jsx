@@ -191,7 +191,7 @@ export default function Questions() {
     const dispTot = String(totalQuestions).padStart(2, '0');
     const currentQuestion = !isOnCompletion ? filteredQuestions[currentIndex] : null;
     const isTealCard = currentQuestion && (currentQuestion.id === 'q3' || currentQuestion.id === 'q4');
-    const indicatorColor = isTealCard ? '#0EB09F' : '#137FDE';
+    const indicatorColor = isTealCard ? 'var(--color-success)' : 'var(--color-primary)';
 
     return (
         <div
@@ -256,7 +256,7 @@ export default function Questions() {
                                 className="h-full flex-shrink-0 flex flex-col py-1"
                                 style={{ width: cardWidth || 'calc(100vw - 48px)' }}
                                 onClick={handleCardClick}>
-                                <div className={`flex-1 rounded-[20px] px-5 py-4 flex flex-col shadow-xl overflow-hidden min-h-0 ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#0EB09F]' : 'bg-[#137FDE]'}`}>
+                                <div className={`flex-1 rounded-card px-5 py-4 flex flex-col shadow-xl overflow-hidden min-h-0 ${question.id === 'q3' || question.id === 'q4' ? 'bg-success' : 'bg-primary'}`}>
                                     <div className="mb-4">
                                         <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
                                             {String(index + 1).padStart(2, '0')}/{dispTot}
@@ -276,16 +276,16 @@ export default function Questions() {
                                         value={answers[question.id] || ''}
                                         onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                                         placeholder={question.placeholder}
-                                        className="w-full px-4 py-2.5 rounded-xl bg-[#F9F9F9] text-[#484848] placeholder-[#CDCDCD] text-[16px] font-medium focus:outline-none transition-all mb-3"
+                                        className="w-full px-4 py-2.5 rounded-xl bg-surface text-text placeholder-text-muted text-[16px] font-medium focus:outline-none transition-all mb-3"
                                     />
                                     <div className={`flex-1 rounded-xl px-4 py-2 flex flex-col min-h-[48px] ${question.id === 'q3' || question.id === 'q4' ? 'bg-[#1F685D]' : 'bg-[#123C4B]'}`}>
-                                        <p className={`text-[10px] mb-0.5 ${question.id === 'q3' || question.id === 'q4' ? 'text-[#0EB09F]/50' : 'text-[#137FDE]/50'}`}>メモ用欄</p>
+                                        <p className={`text-[10px] mb-0.5 ${question.id === 'q3' || question.id === 'q4' ? 'text-success/50' : 'text-primary/50'}`}>メモ用欄</p>
                                         <textarea
                                             value={memos[question.id] || ''}
                                             onChange={(e) => handleMemoChange(question.id, e.target.value)}
                                             placeholder={question.memo}
                                             rows={2}
-                                            className={`w-full flex-1 bg-transparent text-xs focus:outline-none resize-none ${question.id === 'q3' || question.id === 'q4' ? 'text-[#0EB09F] placeholder-[#0EB09F]/30' : 'text-[#137FDE] placeholder-[#137FDE]/30'}`}
+                                            className={`w-full flex-1 bg-transparent text-xs focus:outline-none resize-none ${question.id === 'q3' || question.id === 'q4' ? 'text-success placeholder-success/30' : 'text-primary placeholder-primary/30'}`}
                                         />
                                     </div>
                                 </div>
@@ -298,7 +298,7 @@ export default function Questions() {
                         style={{ width: cardWidth || 'calc(100vw - 48px)' }}
                         onClick={handleCompletionCardClick}>
                         {allAnswered ? (
-                            <div className="flex-1 rounded-[20px] px-5 py-4 flex flex-col shadow-xl overflow-hidden bg-[#FE7833]">
+                            <div className="flex-1 rounded-card px-5 py-4 flex flex-col shadow-xl overflow-hidden bg-accent">
                                 <div className="mb-3">
                                     <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
                                         {dispTot}/{dispTot}
@@ -320,14 +320,14 @@ export default function Questions() {
                                         type="button"
                                         onClick={handleSaveAndNavigate}
                                         disabled={saving}
-                                        className="w-full h-[50px] rounded-full font-bold text-[18px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 bg-white text-[#FE7833] hover:opacity-90"
+                                        className="w-full h-[50px] rounded-pill font-bold text-[18px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 bg-white text-accent hover:opacity-90"
                                     >
                                         {saving ? '保存中...' : '家族の回答と比較する'}
                                     </button>
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex-1 rounded-[20px] px-5 py-4 flex flex-col shadow-xl overflow-hidden bg-[#8D8D8D]">
+                            <div className="flex-1 rounded-card px-5 py-4 flex flex-col shadow-xl overflow-hidden bg-disabled">
                                 <div className="mb-3">
                                     <span className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white/20 rounded-full text-white text-sm font-bold">
                                         {dispTot}/{dispTot}
@@ -376,7 +376,7 @@ export default function Questions() {
 
             {/* コピー通知 */}
             {showCopied && (
-                <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-white rounded-full shadow-lg text-sm font-bold text-[#137FDE] animate-[fadeInUp_0.2s_ease-out]">
+                <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-white rounded-pill shadow-lg text-sm font-bold text-primary animate-[fadeInUp_0.2s_ease-out]">
                     リンクをコピーしました！
                 </div>
             )}
