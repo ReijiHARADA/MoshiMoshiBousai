@@ -52,6 +52,8 @@ export default function Questions() {
     const [dragOffset, setDragOffset] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const [slideWidth, setSlideWidth] = useState(0);
+    const [titleMinHeight, setTitleMinHeight] = useState(null);
+    const rulerRef = useRef(null);
 
     const totalQuestions = filteredQuestions.length;
     const totalSlides = totalQuestions + 1; // +1 for completion slide
@@ -122,6 +124,22 @@ export default function Questions() {
         ro.observe(el);
         return () => ro.disconnect();
     }, []);
+
+    // ---------- タイトル高さの最大値計測（入力位置を揃えるため） ----------
+    useEffect(() => {
+        if (!slideWidth || filteredQuestions.length === 0) return;
+        const PEEK = 24;
+        const cardWidth = slideWidth - 2 * PEEK;
+        if (cardWidth <= 40) return;
+        const id = requestAnimationFrame(() => {
+            const el = rulerRef.current;
+            if (!el || !el.children.length) return;
+            const heights = Array.from(el.children).map((child) => child.offsetHeight);
+            const max = Math.max(...heights);
+            setTitleMinHeight(max);
+        });
+        return () => cancelAnimationFrame(id);
+    }, [filteredQuestions, slideWidth, answers]);
 
     // ---------- ネイティブタッチ＋マウスイベント ----------
     useEffect(() => {
@@ -320,6 +338,25 @@ export default function Questions() {
                 backgroundColor: '#ffffff',
             }}
         >
+            {/* 物差し: 全質問タイトル高さを計測（非表示） */}
+            {cardWidth > 40 && (
+                <div
+                    ref={rulerRef}
+                    aria-hidden="true"
+                    className="absolute left-0 top-0 pointer-events-none invisible"
+                    style={{ width: cardWidth - 40 }}
+                >
+                    {filteredQuestions.map((question) => (
+                        <div
+                            key={question.id}
+                            className="font-bold leading-[135%] whitespace-pre-line"
+                            style={{ fontSize: 'clamp(29px, 8vw, 36px)' }}
+                        >
+                            {resolveQuestionText(question.text || '')}
+                        </div>
+                    ))}
+                </div>
+            )}
             {/* ヘッダー */}
             <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
                 <div />
@@ -360,7 +397,13 @@ export default function Questions() {
                                             {String(index + 1).padStart(2, '0')}/{dispTot}
                                         </span>
                                     </div>
-                                    <h2 className="font-bold text-white leading-[135%] mb-3 whitespace-pre-line" style={{ fontSize: 'clamp(29px, 8vw, 36px)' }}>
+                                    <h2
+                                        className="font-bold text-white leading-[135%] mb-3 whitespace-pre-line flex-shrink-0"
+                                        style={{
+                                            fontSize: 'clamp(29px, 8vw, 36px)',
+                                            minHeight: titleMinHeight != null ? titleMinHeight : undefined,
+                                        }}
+                                    >
                                         {qText}
                                     </h2>
                                     <input
