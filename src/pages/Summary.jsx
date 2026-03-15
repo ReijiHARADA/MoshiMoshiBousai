@@ -263,6 +263,8 @@ export default function Summary() {
     }
 
     const currentCard = expandedCard !== null ? questionCards[expandedCard] : null;
+    const displayedCard = questionCards[currentIndex];
+    const indicatorColor = displayedCard?.isIndividual ? '#0EB09F' : '#137FDE';
 
     return (
         <div className="h-[100dvh] max-h-[100dvh] relative overflow-hidden overscroll-none bg-white flex flex-col">
@@ -340,7 +342,7 @@ export default function Summary() {
                     backgroundColor: 'transparent'
                 }}
             >
-                {/* ドットインジケーター */}
+                {/* ドットインジケーター（表示中のカードが個別＝青緑、共通＝青） */}
                 <div className="relative z-10 flex justify-center items-center gap-2 mb-4 drop-shadow-[0_8px_14px_rgba(93,93,93,0.22)] pointer-events-auto">
                     {questionCards.map((_, i) => (
                         <div
@@ -349,7 +351,7 @@ export default function Summary() {
                             style={{
                                 width: i === currentIndex ? '24px' : '8px',
                                 height: '8px',
-                                backgroundColor: i === currentIndex ? '#137FDE' : '#C5C5C5',
+                                backgroundColor: i === currentIndex ? indicatorColor : '#C5C5C5',
                             }}
                         />
                     ))}

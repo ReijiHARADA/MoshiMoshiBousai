@@ -309,6 +309,9 @@ export default function Questions() {
     const progress = isOnCompletion ? 100 : ((currentIndex + 1) / totalQuestions) * 100;
     const dispIdx = isOnCompletion ? String(totalQuestions).padStart(2, '0') : String(currentIndex + 1).padStart(2, '0');
     const dispTot = String(totalQuestions).padStart(2, '0');
+    const currentQuestion = !isOnCompletion ? filteredQuestions[currentIndex] : null;
+    const isTealCard = currentQuestion && (currentQuestion.id === 'q3' || currentQuestion.id === 'q4');
+    const indicatorColor = isTealCard ? '#0EB09F' : '#137FDE';
 
     return (
         <div
@@ -446,9 +449,8 @@ export default function Questions() {
                 </div>
             </div>
 
-            {/* ドットインジケーター */}
+            {/* ドットインジケーター（質問3・4表示時は青緑 #0EB09F） */}
             <div className="absolute left-0 right-0 pb-3 pt-0 -mt-1 pointer-events-none" style={{ bottom: '0', backgroundColor: 'transparent' }}>
-                {/* ドット */}
                 <div className="relative z-10 flex justify-center items-center gap-2 pointer-events-auto drop-shadow-[0_8px_14px_rgba(93,93,93,0.22)]">
                     {filteredQuestions.map((_, i) => (
                         <div
@@ -457,7 +459,7 @@ export default function Questions() {
                             style={{
                                 width: i === currentIndex && !isOnCompletion ? '24px' : '8px',
                                 height: '8px',
-                                backgroundColor: i === currentIndex && !isOnCompletion ? '#137FDE' : '#C5C5C5',
+                                backgroundColor: i === currentIndex && !isOnCompletion ? indicatorColor : '#C5C5C5',
                             }}
                         />
                     ))}
