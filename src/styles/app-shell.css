@@ -1,0 +1,29 @@
+/**
+ * App shell 専用スタイル。
+ * モバイル幅超え時の青ガターとフッター全幅背景。
+ */
+@media (min-width: 449px) {
+  .app-wrapper {
+    position: relative;
+  }
+
+  .app-wrapper::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-color: var(--color-primary);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  footer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: inherit;
+    z-index: -1;
+    width: 100vw;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}

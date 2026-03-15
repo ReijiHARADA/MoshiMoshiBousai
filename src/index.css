@@ -50,34 +50,7 @@ body {
     overscroll-behavior-y: none;
 }
 
-/* App.jsx の青ガター */
-@media (min-width: 449px) {
-  .app-wrapper {
-    position: relative;
-  }
-
-  /* 全体を青で塗る */
-  .app-wrapper::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-color: var(--color-primary);
-    z-index: 0;
-    pointer-events: none;
-  }
-
-  /* フッターの背景を全幅に拡張 */
-  footer::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-color: inherit;
-    z-index: -1;
-    width: 100vw;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-}
+@import "./styles/app-shell.css";
 
 /* Chrome のオーバースクロール対策 */
 html {
