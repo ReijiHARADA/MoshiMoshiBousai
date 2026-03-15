@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { QUESTIONS } from '../data/questions';
@@ -15,12 +16,18 @@ import tips7Svg from '../assets/tips7.svg';
 
 export default function Summary() {
     const { roomId } = useParams();
+    const location = useLocation();
+    const fromQuestions = location.state?.fromQuestions ?? false;
+    const [hasEntered, setHasEntered] = useState(!fromQuestions);
 
     const [users, setUsers] = useState([]);
     const [answers, setAnswers] = useState([]);
     const [agreements, setAgreements] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [expandedCard, setExpandedCard] = useState(null);
+    const [overlayState, setOverlayState] = useState('closed'); // 'closed' | 'opening' | 'open' | 'closing'
+    const [targetRect, setTargetRect] = useState(/** @type {{ top: number; left: number; width: number; height: number } | null} */ (null));
+    const [showChrome, setShowChrome] = useState(true);
     const [showCopied, setShowCopied] = useState(false);
     const [showSheetModal, setShowSheetModal] = useState(false);
     const [dragOffset, setDragOffset] = useState(0);
@@ -29,6 +36,12 @@ export default function Summary() {
     const [isClosingOverlay, setIsClosingOverlay] = useState(false);
 
     // Refs
+    const overlayCardRefs = useRef({});
+    const pendingAgreementRef = useRef(null);
+    const openCardRectRef = useRef(null);
+    const closingCardIndexRef = useRef(null);
+    const [suppressTrackTransition, setSuppressTrackTransition] = useState(false);
+    const [chromeInstantShow, setChromeInstantShow] = useState(false);
     const containerRef = useRef(null);
     const touchStartX = useRef(0);
     const touchStartY = useRef(0);
@@ -40,6 +53,70 @@ export default function Summary() {
 
     useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
     useEffect(() => { expandedRef.current = expandedCard; }, [expandedCard]);
+
+    const getCardRect = (idx) => {
+        const el = overlayCardRefs.current[idx];
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { top: r.top, left: r.left, width: r.width, height: r.height };
+    };
+
+    const openOverlay = (idx) => {
+        const rect = getCardRect(idx);
+        openCardRectRef.current = rect;
+        setExpandedCard(idx);
+        setCurrentIndex(idx); // 開いたカードにカルーセルを合わせる（閉じるときの着地点がずれないように）
+        setShowChrome(false);
+        setTargetRect(rect);
+        setOverlayState('opening');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => setOverlayState('open'));
+        });
+    };
+
+    const requestCloseOverlay = () => {
+        closingCardIndexRef.current = expandedCard;
+        const rect = openCardRectRef.current ?? getCardRect(expandedCard);
+        setTargetRect(rect);
+        setIsClosingOverlay(true);
+        setOverlayState('closing');
+    };
+
+    const finishCloseOverlay = () => {
+        const indexToRestore = closingCardIndexRef.current;
+        closingCardIndexRef.current = null;
+        setOverlayState('closed');
+        setExpandedCard(null);
+        setTargetRect(null);
+        openCardRectRef.current = null;
+        setIsClosingOverlay(false);
+        if (indexToRestore !== null && indexToRestore !== undefined) {
+            setCurrentIndex(indexToRestore);
+        }
+        const pending = pendingAgreementRef.current;
+        if (pending) {
+            pendingAgreementRef.current = null;
+            setAgreements((prev) => {
+                const filtered = prev.filter((a) => a.id !== pending.id);
+                return [...filtered, pending];
+            });
+        }
+        setSuppressTrackTransition(true);
+        setChromeInstantShow(true);
+        setShowChrome(true);
+        setTimeout(() => {
+            setSuppressTrackTransition(false);
+            setChromeInstantShow(false);
+        }, 50);
+    };
+
+    // Questions からの遷移時: 入りアニメーション
+    useEffect(() => {
+        if (fromQuestions) {
+            const id = requestAnimationFrame(() => setHasEntered(true));
+            return () => cancelAnimationFrame(id);
+        }
+    }, [fromQuestions]);
 
     // ---------- スクロール抑制 ----------
     useEffect(() => {
@@ -103,7 +180,6 @@ export default function Summary() {
 
     const agreedCount = questionCards.filter((c) => c.isAgreed).length;
     const totalCount = questionCards.length;
-    const isAnyExpanded = expandedCard !== null;
 
     // ---------- コンテナ幅 ----------
     useEffect(() => {
@@ -267,11 +343,18 @@ export default function Summary() {
     const indicatorColor = displayedCard?.isIndividual ? '#0EB09F' : '#137FDE';
 
     return (
-        <div className="h-[100dvh] max-h-[100dvh] relative overflow-hidden overscroll-none bg-white flex flex-col">
+        <div
+            className="h-[100dvh] max-h-[100dvh] relative overflow-hidden overscroll-none bg-white flex flex-col"
+            style={{
+                opacity: hasEntered ? 1 : 0,
+                transform: hasEntered ? 'translateY(0)' : 'translateY(12px)',
+                transition: 'opacity 0.25s ease-out, transform 0.25s ease-out',
+            }}
+        >
             {/* ===== ヘッダー ===== */}
             <div
                 className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0 transition-all duration-300"
-                style={{ opacity: isAnyExpanded ? 0 : 1, pointerEvents: isAnyExpanded ? 'none' : 'auto' }}
+                style={{ opacity: showChrome ? 1 : 0, pointerEvents: showChrome ? 'auto' : 'none', transition: chromeInstantShow ? 'none' : undefined }}
             >
                 <div
                     className="flex items-center gap-3 rounded-full px-3 h-9"
@@ -295,13 +378,13 @@ export default function Summary() {
             <div
                 ref={containerRef}
                 className="flex-1 overflow-hidden min-h-0 transition-opacity duration-300"
-                style={{ opacity: isAnyExpanded ? 0 : 1, pointerEvents: isAnyExpanded ? 'none' : 'auto' }}
+                style={{ opacity: showChrome ? 1 : 0, pointerEvents: showChrome ? 'auto' : 'none', transition: chromeInstantShow ? 'none' : undefined }}
             >
                 <div
                     className="h-full flex"
                     style={{
                         transform: `translate3d(${trackPx}px, 0, 0)`,
-                        transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)',
+                        transition: (isDragging || suppressTrackTransition) ? 'none' : 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)',
                         willChange: 'transform',
                         gap: `${CARD_GAP}px`,
                         paddingBottom: '150px',
@@ -324,7 +407,8 @@ export default function Summary() {
                                 <SummaryCard
                                     card={card}
                                     displayText={displayText}
-                                    onExpand={() => setExpandedCard(idx)}
+                                    onExpand={() => openOverlay(idx)}
+                                    cardRef={(el) => { overlayCardRefs.current[idx] = el; }}
                                 />
                             )}
                         </div>
@@ -337,9 +421,10 @@ export default function Summary() {
                 className="absolute left-0 right-0 px-5 pointer-events-none transition-opacity duration-300"
                 style={{ 
                     bottom: '16px',
-                    opacity: isAnyExpanded ? 0 : 1, 
-                    pointerEvents: isAnyExpanded ? 'none' : 'auto',
-                    backgroundColor: 'transparent'
+                    opacity: showChrome ? 1 : 0,
+                    pointerEvents: showChrome ? 'auto' : 'none',
+                    backgroundColor: 'transparent',
+                    transition: chromeInstantShow ? 'none' : undefined
                 }}
             >
                 {/* ドットインジケーター（表示中のカードが個別＝青緑、共通＝青） */}
@@ -375,26 +460,24 @@ export default function Summary() {
                 )}
             </div>
 
-            {/* ===== フルスクリーン展開オーバーレイ ===== */}
-            <ExpandedOverlay
-                card={currentCard}
-                roomId={roomId}
-                displayText={displayText}
-                onClose={() => {
-                    setIsClosingOverlay(true);
-                    setExpandedCard(null);
-                    setTimeout(() => setIsClosingOverlay(false), 300);
-                }}
-                onAgreed={(agreementData) => {
-                    setAgreements((prev) => {
-                        const filtered = prev.filter((a) => a.id !== agreementData.id);
-                        return [...filtered, agreementData];
-                    });
-                    setIsClosingOverlay(true);
-                    setExpandedCard(null);
-                    setTimeout(() => setIsClosingOverlay(false), 300);
-                }}
-            />
+            {/* ===== フルスクリーン展開オーバーレイ（body に portal で viewport 基準） ===== */}
+            {typeof document !== 'undefined' && document.body && overlayState !== 'closed' && createPortal(
+                <ExpandedOverlay
+                    card={currentCard}
+                    overlayState={overlayState}
+                    targetRect={targetRect}
+                    contentMaxWidth={slideWidth || (typeof window !== 'undefined' ? window.innerWidth - 48 : 400)}
+                    roomId={roomId}
+                    displayText={displayText}
+                    onClose={requestCloseOverlay}
+                    onClosed={finishCloseOverlay}
+                    onAgreed={(agreementData) => {
+                        pendingAgreementRef.current = agreementData;
+                        requestCloseOverlay();
+                    }}
+                />,
+                document.body
+            )}
 
             {/* ===== 防災シートモーダル ===== */}
             {showSheetModal && (
@@ -453,13 +536,16 @@ function IndividualCard({ card, users, displayText }) {
 }
 
 // ========== カルーセル内のカード（非展開時）==========
-function SummaryCard({ card, displayText, onExpand }) {
+function SummaryCard({ card, displayText, onExpand, cardRef }) {
     const { question, cohabitingAnswers, separateAnswers, agreement, isAgreed } = card;
     const badgeBg = isAgreed ? 'bg-[#1E1E1E]' : 'bg-[#FE7833]';
     const badgeText = isAgreed ? '合意済' : '✗ 未一致';
 
     return (
-        <div className="flex-1 bg-[#137FDE] rounded-[20px] flex flex-col shadow-xl overflow-hidden min-h-0">
+        <div
+            ref={cardRef}
+            className="flex-1 bg-[#137FDE] rounded-[20px] flex flex-col shadow-xl overflow-hidden min-h-0"
+        >
             <div className="flex-1 overflow-y-auto px-5 pt-4 pb-0 flex flex-col min-h-0">
                 <div className="mb-2 flex-shrink-0">
                     <span className={`inline-block px-3.5 py-1.5 rounded-full text-white text-sm font-bold ${badgeBg}`}>
@@ -535,97 +621,55 @@ function SummaryCard({ card, displayText, onExpand }) {
 }
 
 // ========== フルスクリーン展開オーバーレイ ==========
-function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
+function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, roomId, displayText, onClose, onClosed, onAgreed }) {
     const [agreedText, setAgreedText] = useState('');
     const [memoText, setMemoText] = useState('');
     const [saving, setSaving] = useState(false);
-    const [isVisible, setIsVisible] = useState(false);
-    const [isAnimatingOut, setIsAnimatingOut] = useState(false);
-    const [isClosing, setIsClosing] = useState(false);
-    const [animationPhase, setAnimationPhase] = useState('idle'); // idle, shrinking, expanding, expanded
     const prevCardRef = useRef(null);
+    const closedFiredRef = useRef(false);
 
-    // 開く/閉じるアニメーション管理
     useEffect(() => {
         if (card) {
             prevCardRef.current = card;
             setAgreedText(card.agreement?.agreedText || '');
             setMemoText('');
-            setIsClosing(false);
-            
-            // 収縮フェーズ開始
-            setAnimationPhase('shrinking');
-            setTimeout(() => {
-                // 展開フェーズ開始
-                setAnimationPhase('expanding');
-                setIsVisible(true);
-                
-                // 展開完了
-                setTimeout(() => {
-                    setAnimationPhase('expanded');
-                }, 150);
-            }, 50);
-        } else if (prevCardRef.current) {
-            // 閉じるアニメーション
-            setAnimatingOut(true);
-            setIsVisible(false);
-            setAnimationPhase('shrinking');
-            const timer = setTimeout(() => {
-                setIsAnimatingOut(false);
-                setAnimationPhase('idle');
-                prevCardRef.current = null;
-            }, 300);
-            return () => clearTimeout(timer);
         }
     }, [card]);
 
-    // 青い画面が開いている間だけ theme-color を青色に変更
     useEffect(() => {
         const meta = document.querySelector('meta[name="theme-color"]');
         if (!meta) return;
-        if (card) {
-            meta.setAttribute('content', '#137FDE');
-        }
-        return () => {
-            meta.setAttribute('content', '#F5F5F5');
-        };
-    }, [card]);
+        if (overlayState !== 'closed') meta.setAttribute('content', '#137FDE');
+        return () => meta.setAttribute('content', '#F5F5F5');
+    }, [overlayState]);
 
-    // 青い画面が開いている間、html/bodyの背景色も青に変更（収縮完了後）
     useEffect(() => {
-        if (card && animationPhase === 'expanding') {
-            const html = document.documentElement;
-            const body = document.body;
-            const prevHtmlBg = html.style.backgroundColor;
-            const prevBodyBg = body.style.backgroundColor;
+        if (overlayState === 'closed') return;
+        const html = document.documentElement;
+        const body = document.body;
+        const prevHtml = html.style.backgroundColor;
+        const prevBody = body.style.backgroundColor;
+        html.style.backgroundColor = '#137FDE';
+        body.style.backgroundColor = '#137FDE';
+        return () => {
+            html.style.backgroundColor = prevHtml;
+            body.style.backgroundColor = prevBody;
+        };
+    }, [overlayState]);
 
-            html.style.backgroundColor = '#137FDE';
-            body.style.backgroundColor = '#137FDE';
-
-            return () => {
-                html.style.backgroundColor = prevHtmlBg;
-                body.style.backgroundColor = prevBodyBg;
-            };
-        }
-    }, [card, animationPhase]);
-
-    const handleClose = () => {
-        // 収縮アニメーション開始
-        setAnimationPhase('shrinking');
-        setIsClosing(true);
-        
-        // 収縮完了後に画面を閉じる
-        setTimeout(() => {
-            onClose();
-            setIsClosing(false);
-            setIsAnimatingOut(false);
-            setAnimationPhase('idle');
-            prevCardRef.current = null;
-        }, 200);
+    const handleShellTransitionEnd = (e) => {
+        if (e.target !== e.currentTarget) return;
+        if (overlayState !== 'closing') return;
+        if (closedFiredRef.current) return;
+        closedFiredRef.current = true;
+        onClosed();
     };
+    useEffect(() => {
+        if (overlayState === 'closing') closedFiredRef.current = false;
+    }, [overlayState]);
 
     const displayCard = card || prevCardRef.current;
-    if (!displayCard && !isAnimatingOut && !isClosing) return null;
+    if (overlayState === 'closed') return null;
 
     const { question, cohabitingAnswers, isAgreed, agreement } = displayCard || {};
     const badgeBg = isAgreed ? 'bg-[#1E1E1E]' : 'bg-[#FE7833]';
@@ -642,127 +686,96 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                 createdAt: new Date().toISOString(),
             };
             await setDoc(doc(collection(db, 'agreements'), agreementId), agreementData);
-            // 収縮アニメーション開始
-            setAnimationPhase('shrinking');
-            setIsClosing(true);
-            
-            // 収縮完了後に画面を閉じる
-            setTimeout(() => {
-                onAgreed(agreementData);
-                setIsClosing(false);
-                setIsAnimatingOut(false);
-                setAnimationPhase('idle');
-                prevCardRef.current = null;
-            }, 200);
+            onAgreed(agreementData);
         } catch (err) {
             console.error('合意保存エラー:', err);
             alert('保存に失敗しました。');
         } finally { setSaving(false); }
     };
 
-    const getClipPath = () => {
-        if (animationPhase === 'idle' || animationPhase === 'shrinking') {
-            return 'circle(5% at 50% 50%)';
-        } else if (animationPhase === 'expanding' || animationPhase === 'expanded') {
-            return 'circle(150% at 50% 50%)';
-        }
-        return 'circle(5% at 50% 50%)';
-    };
+    const useContentWidth = contentMaxWidth && contentMaxWidth > 0 && overlayState === 'open';
+    const shellStyle =
+        (overlayState === 'opening' || overlayState === 'closing') && targetRect
+            ? {
+                top: `${targetRect.top}px`,
+                left: `${targetRect.left}px`,
+                width: `${targetRect.width}px`,
+                height: `${targetRect.height}px`,
+                borderRadius: '20px',
+            }
+            : useContentWidth
+                ? {
+                    top: '0px',
+                    left: `${((typeof window !== 'undefined' ? window.innerWidth : 400) - contentMaxWidth) / 2}px`,
+                    width: `${contentMaxWidth}px`,
+                    height: '100%',
+                    borderRadius: '0px',
+                }
+                : {
+                    top: '0px',
+                    left: '0px',
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '0px',
+                };
 
-    const getTransition = () => {
-        if (animationPhase === 'shrinking') {
-            return 'clip-path 0.05s cubic-bezier(0.4, 0, 1, 1)';
-        } else if (animationPhase === 'expanding') {
-            return 'clip-path 0.15s cubic-bezier(0.25, 1, 0.5, 1)';
-        }
-        return 'clip-path 0.1s ease';
-    };
+    const isOpen = overlayState === 'open';
 
     return (
-        <>
-            {/* Safe-area背景（上部） */}
+        <div
+            className="fixed overflow-hidden bg-[#137FDE] z-40 flex flex-col"
+            style={{
+                ...shellStyle,
+                transition:
+                    'top 260ms cubic-bezier(0.25, 1, 0.5, 1), ' +
+                    'left 260ms cubic-bezier(0.25, 1, 0.5, 1), ' +
+                    'width 260ms cubic-bezier(0.25, 1, 0.5, 1), ' +
+                    'height 260ms cubic-bezier(0.25, 1, 0.5, 1), ' +
+                    'border-radius 260ms cubic-bezier(0.25, 1, 0.5, 1)',
+                pointerEvents: isOpen ? 'auto' : 'none',
+            }}
+            onTransitionEnd={handleShellTransitionEnd}
+        >
             <div
-                className="absolute top-0 left-0 right-0 bg-[#137FDE]"
+                className="flex-1 flex flex-col min-h-0"
                 style={{
-                    height: 'env(safe-area-inset-top, 0px)',
-                    opacity: animationPhase === 'expanding' || animationPhase === 'expanded' ? 1 : 0,
-                    transition: 'opacity 0.05s ease',
-                    zIndex: 50,
-                }}
-            />
-            {/* Safe-area背景（下部） */}
-            <div
-                className="absolute bottom-0 left-0 right-0 bg-[#137FDE]"
-                style={{
-                    height: 'env(safe-area-inset-bottom, 0px)',
-                    opacity: animationPhase === 'expanding' || animationPhase === 'expanded' ? 1 : 0,
-                    transition: 'opacity 0.05s ease',
-                    zIndex: 50,
-                }}
-            />
-            <div
-                className={`absolute inset-0 ${isClosing ? 'z-30' : 'z-40'} flex flex-col overflow-hidden bg-[#137FDE]`}
-                style={{
-                    clipPath: getClipPath(),
-                    transition: getTransition(),
-                    pointerEvents: (animationPhase === 'expanded') ? 'auto' : 'none',
+                    opacity: isOpen ? 1 : 0,
+                    transition: overlayState === 'closing'
+                        ? 'opacity 90ms ease'
+                        : 'opacity 140ms ease 80ms',
                 }}
             >
-            {/* メインコンテンツ */}
-            <div className="flex-1 bg-[#137FDE] flex flex-col min-h-0">
-                {!isClosing && (
-                    <div 
-                        className="flex-1 overflow-y-auto overscroll-contain px-6 pb-8 min-h-0"
-                        style={{
-                            paddingTop: 'calc(4rem + env(safe-area-inset-top, 0px))',
-                            paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))'
-                        }}
-                    >
-                        {/* バッジ + 閉じるボタン - レイヤー1 */}
-                        <div 
-                            className="flex items-center justify-between mb-4"
-                            style={{
-                                opacity: animationPhase === 'expanded' ? 1 : 0,
-                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
-                                transition: 'opacity 0.1s ease 0.05s, transform 0.1s ease 0.05s'
+                <div
+                    className="flex-1 overflow-y-auto overscroll-contain px-6 pb-8 min-h-0"
+                    style={{
+                        paddingTop: 'calc(4rem + env(safe-area-inset-top, 0px))',
+                        paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))'
+                    }}
+                >
+                    {/* バッジ + 閉じるボタン - レイヤー1 */}
+                    <div className="flex items-center justify-between mb-4">
+                        <span className={`inline-block px-3 py-1 rounded-full text-white text-sm font-bold ${badgeBg}`}>
+                            {badgeText}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onClose();
                             }}
+                            className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-[#137FDE] text-xl font-semibold hover:bg-white/90 transition-all"
                         >
-                            <span className={`inline-block px-3 py-1 rounded-full text-white text-sm font-bold ${badgeBg}`}>
-                                {badgeText}
-                            </span>
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleClose();
-                                }}
-                                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-[#137FDE] text-xl font-semibold hover:bg-white/90 transition-all"
-                            >
-                                ✕
-                            </button>
-                        </div>
+                            ✕
+                        </button>
+                    </div>
 
-                        {/* 質問 - レイヤー1 */}
-                        <h3 
-                            className="text-2xl font-bold text-white leading-relaxed mb-6 whitespace-pre-line"
-                            style={{
-                                opacity: animationPhase === 'expanded' ? 1 : 0,
-                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
-                                transition: 'opacity 0.1s ease 0.06s, transform 0.1s ease 0.06s'
-                            }}
-                        >
-                            {displayText(question?.text)}
-                        </h3>
+                    {/* 質問 - レイヤー1 */}
+                    <h3 className="text-2xl font-bold text-white leading-relaxed mb-6 whitespace-pre-line">
+                        {displayText(question?.text)}
+                    </h3>
 
-                        {/* 回答一覧 - レイヤー2 */}
-                        <div 
-                            className="space-y-4 mb-6"
-                            style={{
-                                opacity: animationPhase === 'expanded' ? 1 : 0,
-                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
-                                transition: 'opacity 0.1s ease 0.08s, transform 0.1s ease 0.08s'
-                            }}
-                        >
+                    {/* 回答一覧 - レイヤー2 */}
+                    <div className="space-y-4 mb-6">
                             {cohabitingAnswers?.map(({ user, answerText, memoText: memo }) => (
                                 <div key={user.id} className="flex items-start justify-between">
                                     <span className="inline-block bg-white text-stone-900 rounded-full px-2.5 py-0.5 text-base font-medium border border-white flex-shrink-0">
@@ -777,13 +790,7 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                         </div>
 
                         {/* Tips カード - レイヤー2 */}
-                        <div
-                            style={{
-                                opacity: animationPhase === 'expanded' ? 1 : 0,
-                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
-                                transition: 'opacity 0.1s ease 0.09s, transform 0.1s ease 0.09s'
-                            }}
-                        >
+                        <div>
                         {(question?.id === 'q5' || question?.id === 'q6') ? (
                             /* === 171ダイヤル Tips (Q5/Q6) === */
                             <div className="bg-white rounded-lg p-4 mb-6">
@@ -896,14 +903,7 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                         </div>
 
                         {/* 合意フォーム - レイヤー3 */}
-                        <div 
-                            className="mb-4"
-                            style={{
-                                opacity: animationPhase === 'expanded' ? 1 : 0,
-                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
-                                transition: 'opacity 0.1s ease 0.1s, transform 0.1s ease 0.1s'
-                            }}
-                        >
+                        <div className="mb-4">
                             <label className="text-white text-xl font-bold mb-3 block">合意した避難場所</label>
                             <input
                                 type="text"
@@ -929,19 +929,12 @@ function ExpandedOverlay({ card, roomId, displayText, onClose, onAgreed }) {
                             onClick={handleAgree}
                             disabled={saving}
                             className="w-full py-3 rounded-full bg-[#FE7833] text-white font-bold text-2xl shadow-lg hover:bg-[#e56a2a] active:scale-[0.98] transition-all disabled:opacity-50"
-                            style={{
-                                opacity: animationPhase === 'expanded' ? 1 : 0,
-                                transform: animationPhase === 'expanded' ? 'scale(1)' : 'scale(0.95)',
-                                transition: 'opacity 0.1s ease 0.11s, transform 0.1s ease 0.11s'
-                            }}
                         >
                             {saving ? '保存中...' : '全員で合意した'}
                         </button>
-                    </div>
-                )}
+                </div>
             </div>
         </div>
-        </>
     );
 }
 

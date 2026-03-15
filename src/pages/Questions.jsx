@@ -53,6 +53,7 @@ export default function Questions() {
     const [isDragging, setIsDragging] = useState(false);
     const [slideWidth, setSlideWidth] = useState(0);
     const [titleMinHeight, setTitleMinHeight] = useState(null);
+    const [isExiting, setIsExiting] = useState(false);
     const rulerRef = useRef(null);
 
     const totalQuestions = filteredQuestions.length;
@@ -310,7 +311,10 @@ export default function Questions() {
                     answerText: answers[q.id] || '', memoText: memos[q.id] || '',
                 });
             }));
-            navigate(`/room/${roomId}/summary`);
+            setIsExiting(true);
+            setTimeout(() => {
+                navigate(`/room/${roomId}/summary`, { state: { fromQuestions: true } });
+            }, 200);
         } catch (err) {
             console.error('回答保存エラー:', err);
             alert('回答の保存に失敗しました。');
@@ -336,6 +340,9 @@ export default function Questions() {
             className="h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden overscroll-none relative"
             style={{
                 backgroundColor: '#ffffff',
+                opacity: isExiting ? 0 : 1,
+                transform: isExiting ? 'translateY(8px) scale(0.98)' : 'translateY(0) scale(1)',
+                transition: 'opacity 0.2s ease, transform 0.2s ease',
             }}
         >
             {/* 物差し: 全質問タイトル高さを計測（非表示） */}
