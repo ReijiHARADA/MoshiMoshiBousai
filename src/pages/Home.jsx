@@ -197,7 +197,7 @@ export default function Home() {
                                                 checked={attributes[key]}
                                                 onChange={() => handleCheckbox(key)}
                                             />
-                                            <span className="text-[#F9F9F9] text-[16px] font-medium">
+                                            <span className="text-on-primary text-[16px] font-medium">
                                                 {label}
                                             </span>
                                         </label>
@@ -207,7 +207,7 @@ export default function Home() {
                                         value={otherText}
                                         onChange={(e) => setOtherText(e.target.value)}
                                         placeholder="その他"
-                                        className="w-full h-9 rounded-lg bg-[#154F81] px-4 text-[16px] font-medium text-[#F9F9F9] placeholder-[#137FDE] outline-none focus:text-[#F9F9F9] transition-colors"
+                                        className="w-full h-input rounded-input bg-input-dark px-4 text-[16px] font-medium text-on-primary placeholder-primary outline-none focus:text-on-primary transition-colors"
                                     />
                                 </div>
                             </FieldBlock>
@@ -263,7 +263,7 @@ export default function Home() {
                         <button
                             type="button"
                             onClick={handleShareLink}
-                            className="w-full flex items-center justify-center gap-2 py-3.5 mb-3 rounded-xl border-2 border-[#137FDE] bg-white text-[#137FDE] font-bold text-base hover:bg-[#137FDE]/5 active:scale-[0.98] transition-all"
+                            className="w-full flex items-center justify-center gap-2 py-3.5 mb-3 rounded-xl border-2 border-primary bg-white text-primary font-bold text-base hover:bg-primary/5 active:scale-[0.98] transition-all"
                         >
                             <Share className="w-5 h-5" />
                             {copied ? 'コピーしました！' : 'リンクを共有する'}
@@ -272,7 +272,7 @@ export default function Home() {
                         <button
                             type="button"
                             onClick={handleGoToQuestions}
-                            className="w-full py-3.5 rounded-xl bg-[#137FDE] text-white font-bold text-base shadow-lg hover:bg-[#0f6dbf] active:scale-[0.98] transition-all"
+                            className="w-full py-3.5 rounded-xl bg-primary text-white font-bold text-base shadow-lg hover:bg-primary-hover active:scale-[0.98] transition-all"
                         >
                             回答に進む
                         </button>

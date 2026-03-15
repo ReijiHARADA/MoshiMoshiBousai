@@ -7,9 +7,9 @@ export default function FieldBlock({ icon, label, description, children }) {
             <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-1">
                     {icon}
-                    <span className="text-[#F9F9F9] font-bold text-[20px]">{label}</span>
+                    <span className="text-on-primary font-bold text-[20px]">{label}</span>
                 </div>
-                <p className="text-[#F9F9F9] text-[12px] leading-[1.4] opacity-70 text-justify">
+                <p className="text-on-primary text-[12px] leading-[1.4] opacity-70 text-justify">
                     {description}
                 </p>
             </div>

@@ -9,7 +9,7 @@ export default function TextInput({ value, onChange, placeholder, className = ''
             onChange={onChange}
             placeholder={placeholder}
             className={
-                'w-full h-9 rounded-lg bg-[#F9F9F9] px-4 text-[16px] font-medium text-[#484848] placeholder-[#CDCDCD] outline-none transition-colors ' +
+                'w-full h-input rounded-input bg-surface px-4 text-[16px] font-medium text-text placeholder-text-muted outline-none transition-colors ' +
                 (className || '')
             }
             {...rest}

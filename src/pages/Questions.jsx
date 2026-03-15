@@ -226,7 +226,7 @@ export default function Questions() {
             <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
                 <div />
                 <button type="button" onClick={handleShare}
-                    className="flex items-center gap-1 rounded-full px-3 h-9 text-[16px] font-medium active:scale-95 transition-all bg-[#8D8D8D] text-white hover:bg-[#7a7a7a]">
+                    className="flex items-center gap-1 rounded-full px-3 h-9 text-[16px] font-medium active:scale-95 transition-all bg-disabled text-white hover:bg-disabled-hover">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                         <polyline points="16 6 12 2 8 6" />

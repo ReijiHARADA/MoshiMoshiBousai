@@ -5,10 +5,10 @@ export default function BlueFormCard({ title, children, className = '' }) {
     return (
         <div
             className={
-                'bg-[#137FDE] rounded-[20px] px-7 py-7 flex flex-col gap-6 ' + (className || '')
+                'bg-primary rounded-card px-7 py-7 flex flex-col gap-6 ' + (className || '')
             }
         >
-            <h2 className="text-[#F9F9F9] font-bold text-[24px]">{title}</h2>
+            <h2 className="text-on-primary font-bold text-[24px]">{title}</h2>
             {children}
         </div>
     );

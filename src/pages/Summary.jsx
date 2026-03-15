@@ -227,13 +227,13 @@ export default function Summary() {
             >
                 <div
                     className="flex items-center gap-3 rounded-full px-3 h-9"
-                    style={{ backgroundColor: agreedCount >= totalCount ? '#1E1E1E' : '#FE7833' }}
+                    style={{ backgroundColor: agreedCount >= totalCount ? 'var(--color-dark)' : 'var(--color-accent)' }}
                 >
-                    <span className="text-[#F9F9F9] font-medium text-[16px]">合意数</span>
-                    <span className="text-[#F9F9F9] font-bold text-[20px]">{agreedCount}/{totalCount}</span>
+                    <span className="text-on-primary font-medium text-[16px]">合意数</span>
+                    <span className="text-on-primary font-bold text-[20px]">{agreedCount}/{totalCount}</span>
                 </div>
                 <button type="button" onClick={handleShare}
-                    className="flex items-center gap-1 rounded-full px-3 h-9 bg-[#8D8D8D] text-[#F9F9F9] text-[16px] font-medium hover:bg-[#7a7a7a] active:scale-95 transition-all">
+                    className="flex items-center gap-1 rounded-full px-3 h-9 bg-disabled text-on-primary text-[16px] font-medium hover:bg-disabled-hover active:scale-95 transition-all">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                         <polyline points="16 6 12 2 8 6" />
@@ -315,14 +315,14 @@ export default function Summary() {
                     onClick={() => setShowSheetModal(true)}
                     className="w-full h-[53px] rounded-full font-bold text-[24px] transition-all active:scale-[0.98] disabled:cursor-not-allowed pointer-events-auto"
                     style={{
-                        backgroundColor: canCreateSheet ? '#FE7833' : '#8D8D8D',
-                        color: canCreateSheet ? '#F9F9F9' : '#A2A2A2',
+                        backgroundColor: canCreateSheet ? 'var(--color-accent)' : 'var(--color-disabled)',
+                        color: canCreateSheet ? 'var(--color-on-primary)' : 'var(--color-muted)',
                     }}
                 >
                     防災シート作成
                 </button>
                 {!canCreateSheet && (
-                    <p className="text-[#8D8D8D] text-[12px] text-justify mt-2 leading-[1.4]">
+                    <p className="text-disabled text-[12px] text-justify mt-2 leading-[1.4]">
                         全ての項目が合意されないと防災シートを作成することはできません。
                     </p>
                 )}
@@ -362,7 +362,7 @@ export default function Summary() {
 
             {/* コピー通知 */}
             <div
-                className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-white rounded-full shadow-lg text-sm font-bold text-[#137FDE] transition-all duration-300"
+                className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-white rounded-full shadow-lg text-sm font-bold text-primary transition-all duration-300"
                 style={{ opacity: showCopied ? 1 : 0, pointerEvents: showCopied ? 'auto' : 'none' }}
             >
                 リンクをコピーしました！
