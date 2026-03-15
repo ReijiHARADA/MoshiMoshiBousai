@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { createClientId } from '../lib/createClientId';
 import { MapPin, BadgeCheck, Info } from 'lucide-react';
+import BlueFormCard from '../components/forms/BlueFormCard';
+import FieldBlock from '../components/forms/FieldBlock';
+import TextInput from '../components/forms/TextInput';
+import PrimaryButton from '../components/ui/PrimaryButton';
 
 export default function JoinRoom() {
     const { roomId } = useParams();
@@ -11,15 +16,6 @@ export default function JoinRoom() {
     const [location, setLocation] = useState('');
     const [isCohabiting, setIsCohabiting] = useState(null); // null = 未選択, true = 同居, false = 別居
     const [loading, setLoading] = useState(false);
-
-    // スマホのLANテスト時用にcrypto.randomUUID()の代わりを作成
-    const generateUUID = () => {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    };
 
     const handleSubmit = async () => {
         if (!name.trim()) {
@@ -41,7 +37,7 @@ export default function JoinRoom() {
                 return;
             }
             // ユーザーを作成（同じ部屋に追加）
-            const userId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : generateUUID();
+            const userId = createClientId();
 
             const userData = {
                 id: userId,
@@ -84,71 +80,37 @@ export default function JoinRoom() {
                     </p>
                 </div>
 
-                {/* メインカード（青） */}
-                <div className="bg-[#137FDE] rounded-[20px] px-7 py-7 flex flex-col gap-6">
-                    <h2 className="text-[#F9F9F9] font-bold text-[24px]">
-                        もしもし防災を始める
-                    </h2>
-
+                <BlueFormCard title="もしもし防災を始める">
                     <div className="flex flex-col gap-9">
-                        {/* 名前 */}
-                        <div className="flex flex-col gap-2">
-                            <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-1">
-                                    <BadgeCheck size={20} className="text-[#F9F9F9]" />
-                                    <span className="text-[#F9F9F9] font-bold text-[20px]">
-                                        名前
-                                    </span>
-                                </div>
-                                <p className="text-[#F9F9F9] text-[12px] leading-[1.4] opacity-70 text-justify">
-                                    アプリ内での表示名です。お互いを識別しやすい名前を自由につけてください。
-                                </p>
-                            </div>
-                            <input
-                                type="text"
+                        <FieldBlock
+                            icon={<BadgeCheck size={20} className="text-[#F9F9F9]" />}
+                            label="名前"
+                            description="アプリ内での表示名です。お互いを識別しやすい名前を自由につけてください。"
+                        >
+                            <TextInput
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="パパ"
-                                className="w-full h-9 rounded-lg bg-[#F9F9F9] px-4 text-[16px] font-medium text-[#484848] placeholder-[#CDCDCD] outline-none transition-colors"
                             />
-                        </div>
+                        </FieldBlock>
 
-                        {/* よくいる場所 */}
-                        <div className="flex flex-col gap-2">
-                            <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-1">
-                                    <MapPin size={20} className="text-[#F9F9F9]" />
-                                    <span className="text-[#F9F9F9] font-bold text-[20px]">
-                                        よくいる場所
-                                    </span>
-                                </div>
-                                <p className="text-[#F9F9F9] text-[12px] leading-[1.4] opacity-70 text-justify">
-                                    災害は家にいる時に起こるとは限りません。学校や職場など、日中の主な居場所を入力しましょう。
-                                </p>
-                            </div>
-                            <input
-                                type="text"
+                        <FieldBlock
+                            icon={<MapPin size={20} className="text-[#F9F9F9]" />}
+                            label="よくいる場所"
+                            description="災害は家にいる時に起こるとは限りません。学校や職場など、日中の主な居場所を入力しましょう。"
+                        >
+                            <TextInput
                                 value={location}
                                 onChange={(e) => setLocation(e.target.value)}
                                 placeholder="豊洲の職場"
-                                className="w-full h-9 rounded-lg bg-[#F9F9F9] px-4 text-[16px] font-medium text-[#484848] placeholder-[#CDCDCD] outline-none transition-colors"
                             />
-                        </div>
+                        </FieldBlock>
 
-                        {/* リンク作成者と同居していますか？ */}
-                        <div className="flex flex-col gap-2">
-                            <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-1">
-                                    <Info size={20} className="text-[#F9F9F9]" />
-                                    <span className="text-[#F9F9F9] font-bold text-[20px]">
-                                        リンク作成者と同居していますか？
-                                    </span>
-                                </div>
-                                <p className="text-[#F9F9F9] text-[12px] leading-[1.4] opacity-70 text-justify">
-                                    「同居」か「別居」かで、備えるべき防災の形は変わります。離れていても避難先を共有し、合流計画を立てましょう。
-                                </p>
-                            </div>
-
+                        <FieldBlock
+                            icon={<Info size={20} className="text-[#F9F9F9]" />}
+                            label="リンク作成者と同居していますか？"
+                            description="「同居」か「別居」かで、備えるべき防災の形は変わります。離れていても避難先を共有し、合流計画を立てましょう。"
+                        >
                             <div className="flex flex-col gap-1">
                                 <label className="flex items-center gap-2.5 cursor-pointer py-2.5 -mx-2 px-2 rounded-lg active:bg-white/10 transition-colors">
                                     <div
@@ -189,21 +151,13 @@ export default function JoinRoom() {
                                     </span>
                                 </label>
                             </div>
-                        </div>
+                        </FieldBlock>
                     </div>
 
-                    {/* 送信ボタン */}
-                    <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        className="w-full h-[46px] rounded-full bg-[#F9F9F9] flex items-center justify-center shadow-[0_0_11.5px_0_rgba(93,93,93,0.50)] transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <span className="text-[#137FDE] font-bold text-[20px]">
-                            {loading ? '参加中...' : '家族のズレを確認する'}
-                        </span>
-                    </button>
-                </div>
+                    <PrimaryButton onClick={handleSubmit} disabled={loading}>
+                        {loading ? '参加中...' : '家族のズレを確認する'}
+                    </PrimaryButton>
+                </BlueFormCard>
             </div>
             </div>
         </div>
