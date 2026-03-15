@@ -181,6 +181,15 @@ export default function Summary() {
     const agreedCount = questionCards.filter((c) => c.isAgreed).length;
     const totalCount = questionCards.length;
 
+    // 管理者用抜け道: 1枚目（在宅時避難所）の詳細でメモに「admin」と入れて合意すると防災シート作成を有効にする
+    const adminBypass = useMemo(() => {
+        const firstIsQ1 = questionCards[0]?.question?.id === 'q1';
+        const q1Agreement = agreements.find((a) => a.questionId === 'q1');
+        const memoIsAdmin = (q1Agreement?.memoText || '').trim().toLowerCase() === 'admin';
+        return !!(firstIsQ1 && q1Agreement && memoIsAdmin);
+    }, [questionCards, agreements]);
+    const canCreateSheet = agreedCount >= totalCount || adminBypass;
+
     // ---------- コンテナ幅 ----------
     useEffect(() => {
         const el = containerRef.current;
@@ -442,17 +451,17 @@ export default function Summary() {
                 </div>
                 <button
                     type="button"
-                    disabled={agreedCount < totalCount}
+                    disabled={!canCreateSheet}
                     onClick={() => setShowSheetModal(true)}
                     className="w-full h-[53px] rounded-full font-bold text-[24px] transition-all active:scale-[0.98] disabled:cursor-not-allowed pointer-events-auto"
                     style={{
-                        backgroundColor: agreedCount >= totalCount ? '#FE7833' : '#8D8D8D',
-                        color: agreedCount >= totalCount ? '#F9F9F9' : '#A2A2A2',
+                        backgroundColor: canCreateSheet ? '#FE7833' : '#8D8D8D',
+                        color: canCreateSheet ? '#F9F9F9' : '#A2A2A2',
                     }}
                 >
                     防災シート作成
                 </button>
-                {agreedCount < totalCount && (
+                {!canCreateSheet && (
                     <p className="text-[#8D8D8D] text-[12px] text-justify mt-2 leading-[1.4]">
                         全ての項目が合意されないと防災シートを作成することはできません。
                     </p>
@@ -675,7 +684,11 @@ function ExpandedOverlay({ card, overlayState, targetRect, contentMaxWidth, room
     const badgeText = isAgreed ? '✓ 合意済' : '不一致';
 
     const handleAgree = async () => {
-        if (!agreedText.trim()) { alert('合意した内容を入力してください'); return; }
+        const isAdminBypass = (memoText || '').trim().toLowerCase() === 'admin';
+        if (!isAdminBypass && !agreedText.trim()) {
+            alert('合意した内容を入力してください');
+            return;
+        }
         setSaving(true);
         try {
             const agreementId = `${roomId}_${question.id}`;
@@ -973,7 +986,10 @@ function SheetModal({ onClose, questionCards, agreements, answers, users, cohabi
 
     const getAgreedMemo = (qId) => {
         const ag = agreements.find((a) => a.questionId === qId);
-        return ag?.memoText || '';
+        const raw = ag?.memoText || '';
+        // 管理者用抜け道の "admin" はシートには表示しない
+        if (raw.trim().toLowerCase() === 'admin') return '';
+        return raw;
     };
 
     const getIndividualAnswers = (qId) => {
