@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { getCurrentUser } from '../../../lib/session';
+import { getRoomById } from '../../../lib/rooms';
+import { saveAnswers } from '../../../lib/answers';
 import { QUESTIONS } from '../../../data/questions';
 
 /**
@@ -11,22 +12,14 @@ import { QUESTIONS } from '../../../data/questions';
 export function useQuestionSession(roomId) {
     const navigate = useNavigate();
 
-    const currentUser = useMemo(() => {
-        try {
-            return JSON.parse(localStorage.getItem('currentUser')) || {};
-        } catch {
-            return {};
-        }
-    }, []);
+    const currentUser = useMemo(() => getCurrentUser(), []);
 
     const [roomAttributes, setRoomAttributes] = useState(null);
     useEffect(() => {
         const fetchRoom = async () => {
             try {
-                const roomDoc = await getDoc(doc(db, 'rooms', roomId));
-                if (roomDoc.exists()) {
-                    setRoomAttributes(roomDoc.data().attributes || {});
-                }
+                const room = await getRoomById(roomId);
+                if (room) setRoomAttributes(room.attributes || {});
             } catch (err) {
                 console.error('Room fetch error:', err);
             }
@@ -68,17 +61,7 @@ export function useQuestionSession(roomId) {
         setSaving(true);
         try {
             const userId = currentUser.id;
-            await Promise.all(filteredQuestions.map((q) => {
-                const aid = `${roomId}_${userId}_${q.id}`;
-                return setDoc(doc(collection(db, 'answers'), aid), {
-                    id: aid,
-                    roomId,
-                    userId,
-                    questionId: q.id,
-                    answerText: answers[q.id] || '',
-                    memoText: memos[q.id] || '',
-                });
-            }));
+            await saveAnswers(roomId, userId, filteredQuestions, answers, memos);
             setIsExiting(true);
             setTimeout(() => {
                 navigate(`/room/${roomId}/summary`, { state: { fromQuestions: true } });

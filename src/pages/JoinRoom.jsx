@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
 import { createClientId } from '../lib/createClientId';
+import { getRoomById } from '../lib/rooms';
+import { createUser, buildUserForJoin } from '../lib/users';
+import { setCurrentUser } from '../lib/session';
 import { MapPin, BadgeCheck, Info } from 'lucide-react';
 import BlueFormCard from '../components/forms/BlueFormCard';
 import FieldBlock from '../components/forms/FieldBlock';
@@ -29,32 +30,24 @@ export default function JoinRoom() {
 
         setLoading(true);
         try {
-            // ルームの存在確認
-            const roomDoc = await getDoc(doc(db, 'rooms', roomId));
-            if (!roomDoc.exists()) {
+            const room = await getRoomById(roomId);
+            if (!room) {
                 alert('このルームIDは存在しません。');
                 setLoading(false);
                 return;
             }
-            // ユーザーを作成（同じ部屋に追加）
+
             const userId = createClientId();
-
-            const userData = {
-                id: userId,
+            const userData = buildUserForJoin({
+                userId,
                 roomId,
-                name: name.trim(),
-                location: location.trim(),
+                name,
+                location,
                 isCohabiting,
-                attributes: { location: location.trim() },
-            };
+            });
+            await createUser(userData);
+            setCurrentUser(userData);
 
-            // Firestore に保存
-            await setDoc(doc(collection(db, 'users'), userId), userData);
-
-            // localStorage に保存
-            localStorage.setItem('currentUser', JSON.stringify(userData));
-
-            // 質問画面へ遷移
             navigate(`/room/${roomId}/questions`);
         } catch (error) {
             console.error('Error joining room:', error);

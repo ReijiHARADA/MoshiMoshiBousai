@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
 import { createClientId } from '../lib/createClientId';
 import { buildRoomUrl, shareRoom } from '../lib/share';
+import { createRoom } from '../lib/rooms';
+import { createUser, buildUserForHome } from '../lib/users';
+import { setCurrentUser } from '../lib/session';
 import { MapPin, BadgeCheck, Info, Share } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import LandingPage from './LandingPage';
@@ -52,43 +53,20 @@ export default function Home() {
             const roomId = generateRoomId();
             const userId = createClientId();
 
-            await setDoc(doc(db, 'rooms', roomId), {
-                id: roomId,
-                createdAt: serverTimestamp(),
-                attributes: {
-                    ...attributes,
-                    otherText: otherText.trim(),
-                },
+            await createRoom(roomId, {
+                attributes: { ...attributes, otherText: otherText.trim() },
             });
 
-            await setDoc(doc(collection(db, 'users'), userId), {
-                id: userId,
+            const userData = buildUserForHome({
+                userId,
                 roomId,
-                name: name.trim(),
-                isCohabiting: true,
-                location: location.trim(),
-                attributes: {
-                    ...attributes,
-                    otherText: otherText.trim(),
-                    location: location.trim(),
-                },
+                name,
+                location,
+                attributes,
+                otherText,
             });
-
-            localStorage.setItem(
-                'currentUser',
-                JSON.stringify({
-                    id: userId,
-                    roomId,
-                    name: name.trim(),
-                    isCohabiting: true,
-                    location: location.trim(),
-                    attributes: {
-                        ...attributes,
-                        otherText: otherText.trim(),
-                        location: location.trim(),
-                    },
-                })
-            );
+            await createUser(userData);
+            setCurrentUser(userData);
 
             setCreatedRoomId(roomId);
             setShowModal(true);

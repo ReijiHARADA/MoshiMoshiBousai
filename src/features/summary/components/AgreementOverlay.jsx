@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { collection, doc, setDoc } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { saveAgreement } from '../../../lib/agreements';
 import tips1Svg from '../../../assets/tips1.svg';
 import tips2Svg from '../../../assets/tips2.svg';
 import tips3Svg from '../../../assets/tips3.svg';
@@ -93,7 +92,7 @@ export function AgreementOverlay({
                 memoText: memoText.trim(),
                 createdAt: new Date().toISOString(),
             };
-            await setDoc(doc(collection(db, 'agreements'), agreementId), agreementData);
+            await saveAgreement(agreementData);
             onAgreed(agreementData);
         } catch (err) {
             console.error('合意保存エラー:', err);
