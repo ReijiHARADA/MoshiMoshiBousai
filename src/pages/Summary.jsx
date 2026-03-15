@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useParams, useLocation } from 'react-router-dom';
 import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useSwipeCarousel } from '../hooks/useSwipeCarousel';
 import { shareRoom } from '../lib/share';
 import { QUESTIONS } from '../data/questions';
 import { Phone, MessageSquare, Package, MapPin, PawPrint, Baby, Heart, ClipboardList, X, Download, Printer } from 'lucide-react';
@@ -24,16 +25,12 @@ export default function Summary() {
     const [users, setUsers] = useState([]);
     const [answers, setAnswers] = useState([]);
     const [agreements, setAgreements] = useState([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
     const [expandedCard, setExpandedCard] = useState(null);
     const [overlayState, setOverlayState] = useState('closed'); // 'closed' | 'opening' | 'open' | 'closing'
     const [targetRect, setTargetRect] = useState(/** @type {{ top: number; left: number; width: number; height: number } | null} */ (null));
     const [showChrome, setShowChrome] = useState(true);
     const [showCopied, setShowCopied] = useState(false);
     const [showSheetModal, setShowSheetModal] = useState(false);
-    const [dragOffset, setDragOffset] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
-    const [slideWidth, setSlideWidth] = useState(0);
     const [isClosingOverlay, setIsClosingOverlay] = useState(false);
 
     // Refs
@@ -43,16 +40,7 @@ export default function Summary() {
     const closingCardIndexRef = useRef(null);
     const [suppressTrackTransition, setSuppressTrackTransition] = useState(false);
     const [chromeInstantShow, setChromeInstantShow] = useState(false);
-    const containerRef = useRef(null);
-    const touchStartX = useRef(0);
-    const touchStartY = useRef(0);
-    const isHorizontalSwipe = useRef(null);
-    const isDraggingRef = useRef(false);
-    const dragOffsetRef = useRef(0);
-    const currentIndexRef = useRef(0);
     const expandedRef = useRef(null);
-
-    useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
     useEffect(() => { expandedRef.current = expandedCard; }, [expandedCard]);
 
     const getCardRect = (idx) => {
@@ -119,26 +107,6 @@ export default function Summary() {
         }
     }, [fromQuestions]);
 
-    // ---------- スクロール抑制 ----------
-    useEffect(() => {
-        const html = document.documentElement;
-        const body = document.body;
-
-        const prevHtmlOverflow = html.style.overflow;
-        const prevBodyOverflow = body.style.overflow;
-        const prevBodyOverscroll = body.style.overscrollBehavior;
-
-        html.style.overflow = 'hidden';
-        body.style.overflow = 'hidden';
-        body.style.overscrollBehavior = 'none';
-
-        return () => {
-            html.style.overflow = prevHtmlOverflow;
-            body.style.overflow = prevBodyOverflow;
-            body.style.overscrollBehavior = prevBodyOverscroll;
-        };
-    }, []);
-
     // ---------- Firestore ----------
     useEffect(() => {
         const usersQ = query(collection(db, 'users'), where('roomId', '==', roomId));
@@ -182,6 +150,19 @@ export default function Summary() {
     const agreedCount = questionCards.filter((c) => c.isAgreed).length;
     const totalCount = questionCards.length;
 
+    const {
+        containerRef,
+        currentIndex,
+        setCurrentIndex,
+        isDragging,
+        slideWidth,
+        trackTranslatePx,
+        cardWidth,
+        cardGap,
+        goNext,
+        goPrev,
+    } = useSwipeCarousel({ itemCount: totalCount, disableDragRef: expandedRef });
+
     // 管理者用抜け道: 1枚目（在宅時避難所）の詳細でメモに「admin」と入れて合意すると防災シート作成を有効にする
     const adminBypass = useMemo(() => {
         const firstIsQ1 = questionCards[0]?.question?.id === 'q1';
@@ -190,93 +171,6 @@ export default function Summary() {
         return !!(firstIsQ1 && q1Agreement && memoIsAdmin);
     }, [questionCards, agreements]);
     const canCreateSheet = agreedCount >= totalCount || adminBypass;
-
-    // ---------- コンテナ幅 ----------
-    useEffect(() => {
-        const el = containerRef.current;
-        if (!el) return;
-        const measure = () => setSlideWidth(el.offsetWidth);
-        measure();
-        const ro = new ResizeObserver(measure);
-        ro.observe(el);
-        return () => ro.disconnect();
-    }, []);
-
-    // ---------- スワイプ ----------
-    useEffect(() => {
-        const el = containerRef.current;
-        if (!el) return;
-
-        const startDrag = (x, y) => {
-            touchStartX.current = x;
-            touchStartY.current = y;
-            isHorizontalSwipe.current = null;
-            isDraggingRef.current = true;
-            setIsDragging(true);
-        };
-
-        const moveDrag = (x, y, prevent) => {
-            if (!isDraggingRef.current) return;
-            if (expandedRef.current !== null) return;
-            const dx = x - touchStartX.current;
-            const dy = y - touchStartY.current;
-            if (isHorizontalSwipe.current === null) {
-                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-                    isHorizontalSwipe.current = Math.abs(dx) > Math.abs(dy);
-                }
-                return;
-            }
-            if (!isHorizontalSwipe.current) return;
-            if (prevent) prevent();
-            const idx = currentIndexRef.current;
-            let offset = dx;
-            if ((idx === 0 && dx > 0) || (idx >= totalCount - 1 && dx < 0)) offset = dx * 0.25;
-            dragOffsetRef.current = offset;
-            setDragOffset(offset);
-        };
-
-        const endDrag = () => {
-            if (!isDraggingRef.current) return;
-            isDraggingRef.current = false;
-            setIsDragging(false);
-            isHorizontalSwipe.current = null;
-            const offset = dragOffsetRef.current;
-            const idx = currentIndexRef.current;
-            if (offset < -50 && idx < totalCount - 1) setCurrentIndex((p) => p + 1);
-            else if (offset > 50 && idx > 0) setCurrentIndex((p) => p - 1);
-            dragOffsetRef.current = 0;
-            setDragOffset(0);
-        };
-
-        const onTS = (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY);
-        const onTM = (e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault());
-        const onTE = () => endDrag();
-        const onMD = (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            e.preventDefault();
-            startDrag(e.clientX, e.clientY);
-        };
-        const onMM = (e) => { if (isDraggingRef.current) moveDrag(e.clientX, e.clientY); };
-        const onMU = () => endDrag();
-
-        el.addEventListener('touchstart', onTS, { passive: true });
-        el.addEventListener('touchmove', onTM, { passive: false });
-        el.addEventListener('touchend', onTE, { passive: true });
-        el.addEventListener('mousedown', onMD);
-        el.addEventListener('mousemove', onMM);
-        el.addEventListener('mouseup', onMU);
-        el.addEventListener('mouseleave', onMU);
-
-        return () => {
-            el.removeEventListener('touchstart', onTS);
-            el.removeEventListener('touchmove', onTM);
-            el.removeEventListener('touchend', onTE);
-            el.removeEventListener('mousedown', onMD);
-            el.removeEventListener('mousemove', onMM);
-            el.removeEventListener('mouseup', onMU);
-            el.removeEventListener('mouseleave', onMU);
-        };
-    }, [totalCount]);
 
     // ---------- 共有 ----------
     const handleShare = async () => {
@@ -298,15 +192,9 @@ export default function Summary() {
         const cardCenter = rect.width / 2;
         
         if (clickX > cardCenter) {
-            // 右側タップ：次へ
-            if (currentIndex < totalCount - 1) {
-                setCurrentIndex(currentIndex + 1);
-            }
+            goNext();
         } else {
-            // 左側タップ：前へ
-            if (currentIndex > 0) {
-                setCurrentIndex(currentIndex - 1);
-            }
+            goPrev();
         }
     };
 
@@ -329,12 +217,6 @@ export default function Summary() {
         resolved = resolved.replace(/\{otherText\}/g, '[その他]');
         return resolved;
     };
-    const PEEK = 24;
-    const CARD_GAP = 12;
-    const cardWidth = slideWidth ? slideWidth - (2 * PEEK) : 0;
-    const stepSize = cardWidth + CARD_GAP;
-    const trackPx = PEEK - (currentIndex * stepSize) + dragOffset;
-
     if (totalCount === 0) {
         return (
             <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center">
@@ -388,10 +270,10 @@ export default function Summary() {
                 <div
                     className="h-full flex"
                     style={{
-                        transform: `translate3d(${trackPx}px, 0, 0)`,
+                        transform: `translate3d(${trackTranslatePx}px, 0, 0)`,
                         transition: (isDragging || suppressTrackTransition) ? 'none' : 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)',
                         willChange: 'transform',
-                        gap: `${CARD_GAP}px`,
+                        gap: `${cardGap}px`,
                         paddingBottom: '150px',
                     }}
                 >

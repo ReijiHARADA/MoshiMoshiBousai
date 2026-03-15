@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useSwipeCarousel } from '../hooks/useSwipeCarousel';
 import { shareRoom } from '../lib/share';
 import { QUESTIONS } from '../data/questions';
 import familyIllustration from '../assets/family.svg';
@@ -45,20 +46,29 @@ export default function Questions() {
         });
     }, [currentUser, roomAttributes]);
 
-    const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState({});
     const [memos, setMemos] = useState({});
     const [saving, setSaving] = useState(false);
     const [showCopied, setShowCopied] = useState(false);
-    const [dragOffset, setDragOffset] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
-    const [slideWidth, setSlideWidth] = useState(0);
     const [titleMinHeight, setTitleMinHeight] = useState(null);
     const [isExiting, setIsExiting] = useState(false);
     const rulerRef = useRef(null);
 
     const totalQuestions = filteredQuestions.length;
     const totalSlides = totalQuestions + 1; // +1 for completion slide
+
+    const {
+        containerRef,
+        currentIndex,
+        setCurrentIndex,
+        isDragging,
+        slideWidth,
+        trackTranslatePx,
+        cardWidth,
+        cardGap,
+        goNext,
+        goPrev,
+    } = useSwipeCarousel({ itemCount: totalSlides });
 
     // 全問回答済みか、未回答の先頭インデックス（開発者用: 初めの質問のメモに「admin」でスキップ）
     const { allAnswered, firstUnansweredIndex } = useMemo(() => {
@@ -74,38 +84,6 @@ export default function Questions() {
         return { allAnswered: all, firstUnansweredIndex: first >= 0 ? first : 0 };
     }, [filteredQuestions, answers, memos]);
 
-    // Refs（イベントハンドラ内で常に最新値を参照するため）
-    const containerRef = useRef(null);
-    const touchStartX = useRef(0);
-    const touchStartY = useRef(0);
-    const isHorizontalSwipe = useRef(null);
-    const isDraggingRef = useRef(false);
-    const dragOffsetRef = useRef(0);
-    const currentIndexRef = useRef(0);
-
-    // state → ref 同期
-    useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
-
-    // ---------- スクロール抑制 ----------
-    useEffect(() => {
-        const html = document.documentElement;
-        const body = document.body;
-
-        const prevHtmlOverflow = html.style.overflow;
-        const prevBodyOverflow = body.style.overflow;
-        const prevBodyOverscroll = body.style.overscrollBehavior;
-
-        html.style.overflow = 'hidden';
-        body.style.overflow = 'hidden';
-        body.style.overscrollBehavior = 'none';
-
-        return () => {
-            html.style.overflow = prevHtmlOverflow;
-            body.style.overflow = prevBodyOverflow;
-            body.style.overscrollBehavior = prevBodyOverscroll;
-        };
-    }, []);
-
     const resolveQuestionText = (text) => {
         if (!text) return '';
         let resolved = text.replace(/\{prevAnswer:(\w+)\}/g, (_, qId) => {
@@ -116,23 +94,9 @@ export default function Questions() {
         return resolved;
     };
 
-    // ---------- コンテナ幅の計測 ----------
-    useEffect(() => {
-        const el = containerRef.current;
-        if (!el) return;
-        const measure = () => setSlideWidth(el.offsetWidth);
-        measure();
-        const ro = new ResizeObserver(measure);
-        ro.observe(el);
-        return () => ro.disconnect();
-    }, []);
-
     // ---------- タイトル高さの最大値計測（入力位置を揃えるため） ----------
     useEffect(() => {
-        if (!slideWidth || filteredQuestions.length === 0) return;
-        const PEEK = 24;
-        const cardWidth = slideWidth - 2 * PEEK;
-        if (cardWidth <= 40) return;
+        if (!slideWidth || filteredQuestions.length === 0 || cardWidth <= 40) return;
         const id = requestAnimationFrame(() => {
             const el = rulerRef.current;
             if (!el || !el.children.length) return;
@@ -141,104 +105,7 @@ export default function Questions() {
             setTitleMinHeight(max);
         });
         return () => cancelAnimationFrame(id);
-    }, [filteredQuestions, slideWidth, answers]);
-
-    // ---------- ネイティブタッチ＋マウスイベント ----------
-    useEffect(() => {
-        const el = containerRef.current;
-        if (!el) return;
-
-        // --- 共通ドラッグロジック ---
-        const startDrag = (x, y) => {
-            touchStartX.current = x;
-            touchStartY.current = y;
-            isHorizontalSwipe.current = null;
-            isDraggingRef.current = true;
-            setIsDragging(true);
-        };
-
-        const moveDrag = (x, y, prevent) => {
-            if (!isDraggingRef.current) return;
-            const dx = x - touchStartX.current;
-            const dy = y - touchStartY.current;
-
-            // 最初の数px で縦/横を判定してロック
-            if (isHorizontalSwipe.current === null) {
-                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-                    isHorizontalSwipe.current = Math.abs(dx) > Math.abs(dy);
-                }
-                return;
-            }
-            if (!isHorizontalSwipe.current) return;
-            if (prevent) prevent(); // 横スワイプ時は縦スクロールを防止
-
-            const idx = currentIndexRef.current;
-            let offset = dx;
-            // 端での抵抗感
-            if ((idx === 0 && dx > 0) || (idx >= totalSlides - 1 && dx < 0)) {
-                offset = dx * 0.25;
-            }
-            dragOffsetRef.current = offset;
-            setDragOffset(offset);
-        };
-
-        const endDrag = () => {
-            if (!isDraggingRef.current) return;
-            isDraggingRef.current = false;
-            setIsDragging(false);
-            isHorizontalSwipe.current = null;
-
-            const offset = dragOffsetRef.current;
-            const idx = currentIndexRef.current;
-            if (offset < -50 && idx < totalSlides - 1) {
-                setCurrentIndex((p) => p + 1);
-            } else if (offset > 50 && idx > 0) {
-                setCurrentIndex((p) => p - 1);
-            }
-            dragOffsetRef.current = 0;
-            setDragOffset(0);
-        };
-
-        // --- タッチ ---
-        const onTS = (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY);
-        const onTM = (e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault());
-        const onTE = () => endDrag();
-
-        // --- マウス（PC）---
-        const onMD = (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            e.preventDefault();
-            startDrag(e.clientX, e.clientY);
-        };
-        const onMM = (e) => { if (isDraggingRef.current) moveDrag(e.clientX, e.clientY); };
-        const onMU = () => endDrag();
-
-        el.addEventListener('touchstart', onTS, { passive: true });
-        el.addEventListener('touchmove', onTM, { passive: false });
-        el.addEventListener('touchend', onTE, { passive: true });
-        el.addEventListener('mousedown', onMD);
-        el.addEventListener('mousemove', onMM);
-        el.addEventListener('mouseup', onMU);
-        el.addEventListener('mouseleave', onMU);
-
-        return () => {
-            el.removeEventListener('touchstart', onTS);
-            el.removeEventListener('touchmove', onTM);
-            el.removeEventListener('touchend', onTE);
-            el.removeEventListener('mousedown', onMD);
-            el.removeEventListener('mousemove', onMM);
-            el.removeEventListener('mouseup', onMU);
-            el.removeEventListener('mouseleave', onMU);
-        };
-    }, [totalSlides]);
-
-    // ---------- ナビゲーション ----------
-    const goNext = () => {
-        if (currentIndex < totalSlides - 1) setCurrentIndex((p) => p + 1);
-    };
-    const goPrev = () => {
-        if (currentIndex > 0) setCurrentIndex((p) => p - 1);
-    };
+    }, [filteredQuestions, slideWidth, cardWidth, answers]);
 
     // ---------- カードタップナビゲーション ----------
     const handleCardClick = (e) => {
@@ -318,11 +185,6 @@ export default function Questions() {
     };
 
     // ---------- 描画用の値 ----------
-    const PEEK = 24;     // 左右のカードがチラ見えする幅
-    const CARD_GAP = 12; // カード間のスキマ
-    const cardWidth = slideWidth ? slideWidth - (2 * PEEK) : 0;
-    const stepSize = cardWidth + CARD_GAP;
-    const trackPx = PEEK - (currentIndex * stepSize) + dragOffset;
     const isOnCompletion = currentIndex >= totalQuestions;
     const progress = isOnCompletion ? 100 : ((currentIndex + 1) / totalQuestions) * 100;
     const dispIdx = isOnCompletion ? String(totalQuestions).padStart(2, '0') : String(currentIndex + 1).padStart(2, '0');
@@ -379,10 +241,10 @@ export default function Questions() {
                 <div
                     className="h-full flex"
                     style={{
-                        transform: `translate3d(${trackPx}px, 0, 0)`,
+                        transform: `translate3d(${trackTranslatePx}px, 0, 0)`,
                         transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)',
                         willChange: 'transform',
-                        gap: `${CARD_GAP}px`,
+                        gap: `${cardGap}px`,
                         paddingBottom: '40px',
                     }}
                 >
