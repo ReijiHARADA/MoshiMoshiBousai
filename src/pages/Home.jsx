@@ -250,7 +250,7 @@ export default function Home() {
                         <button
                             type="button"
                             onClick={handleGoToQuestions}
-                            className="w-full py-3.5 rounded-xl bg-primary text-white font-bold text-base shadow-lg hover:bg-primary-hover active:scale-[0.98] transition-all"
+                            className="w-full py-3.5 rounded-full bg-primary text-white font-bold text-base shadow-lg hover:bg-primary-hover active:scale-[0.98] transition-all"
                         >
                             回答に進む
                         </button>

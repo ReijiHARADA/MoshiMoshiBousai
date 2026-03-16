@@ -169,7 +169,7 @@ export default function Summary() {
             }}
         >
             <div
-                className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0 transition-all duration-300"
+                className="flex items-center justify-between px-6 pt-4 pb-2 flex-shrink-0 transition-all duration-300"
                 style={{ opacity: showChrome ? 1 : 0, pointerEvents: showChrome ? 'auto' : 'none' }}
             >
                 <div
