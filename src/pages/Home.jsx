@@ -37,6 +37,7 @@ export default function Home() {
     const [showModal, setShowModal] = useState(false);
     const [createdRoomId, setCreatedRoomId] = useState('');
     const [copied, setCopied] = useState(false);
+    const [agreedPrivacy, setAgreedPrivacy] = useState(false);
 
     const handleCheckbox = (key) => {
         setAttributes((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -45,6 +46,10 @@ export default function Home() {
     const handleCreateRoom = async () => {
         if (!name.trim()) {
             alert('名前を入力してください');
+            return;
+        }
+        if (!agreedPrivacy) {
+            alert('同意してください');
             return;
         }
 
@@ -115,6 +120,7 @@ export default function Home() {
                                 icon={<BadgeCheck size={20} className="text-on-primary" />}
                                 label="名前"
                                 description="アプリ内での表示名です。お互いを識別しやすい名前を自由につけてください。"
+                                required
                             >
                                 <TextInput
                                     value={name}
@@ -127,6 +133,7 @@ export default function Home() {
                                 icon={<MapPin size={20} className="text-on-primary" />}
                                 label="よくいる場所"
                                 description="災害は家にいる時に起こるとは限りません。学校や職場など、日中の主な居場所を入力しましょう。"
+                                required
                             >
                                 <TextInput
                                     value={location}
@@ -191,12 +198,32 @@ export default function Home() {
                             </FieldBlock>
                         </div>
 
+                        <div className="mt-8 mb-3">
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={agreedPrivacy}
+                                    onChange={(e) => setAgreedPrivacy(e.target.checked)}
+                                    className="w-3.5 h-3.5 rounded border border-on-primary bg-transparent"
+                                />
+                                <span className="text-xs text-on-primary/80">
+                                    <a href="/privacy" className="underline underline-offset-2">
+                                        プライバシーポリシー
+                                    </a>
+                                    に同意する
+                                </span>
+                            </label>
+                        </div>
+
                         <PrimaryButton
                             onClick={handleCreateRoom}
-                            disabled={loading}
+                            disabled={loading || !agreedPrivacy || !name.trim()}
                         >
                             {loading ? '作成中...' : '家族のズレを確認する'}
                         </PrimaryButton>
+                        <p className="mt-2 text-xs text-[rgba(249,249,249,1)] opacity-70">
+                            住所や本名など、詳しい情報は入力しないでください。
+                        </p>
                     </BlueFormCard>
                 </div>
             </div>
@@ -227,7 +254,7 @@ export default function Home() {
                             </button>
                         </div>
 
-                        <div className="flex justify-center mb-6">
+                        <div className="flex justify-center mb-0.5">
                             <div className="p-4 bg-white rounded-xl">
                                 <QRCodeSVG
                                     value={shareUrl}
@@ -237,6 +264,10 @@ export default function Home() {
                                 />
                             </div>
                         </div>
+
+                        <p className="text-xs text-text/80 mt-0.5 mb-6 text-center">
+                            招待リンクは信頼できる相手だけに共有してください
+                        </p>
 
                         <button
                             type="button"

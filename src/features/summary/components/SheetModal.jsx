@@ -443,7 +443,7 @@ export function SheetModal({
                 </div>
             </div>
 
-            <div className="flex-shrink-0 px-6 pb-8 pt-4 space-y-3 no-print">
+            <div className="flex-shrink-0 px-6 pb-8 pt-3 space-y-3 no-print">
                 <button
                     type="button"
                     onClick={handleSave}
@@ -461,6 +461,9 @@ export function SheetModal({
                     <Printer className="w-5 h-5" />
                     印刷
                 </button>
+                <p className="text-[11px] leading-relaxed text-gray-500 text-center">
+                    本サービスを通じて家族で合意した内容は、備えの整理を支援するものであり、安全や避難行動を保証するものではありません。避難判断は公的情報と現地状況を優先してください。
+                </p>
             </div>
         </div>
     );

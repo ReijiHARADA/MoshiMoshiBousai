@@ -17,6 +17,7 @@ export default function JoinRoom() {
     const [location, setLocation] = useState('');
     const [isCohabiting, setIsCohabiting] = useState(null); // null = 未選択, true = 同居, false = 別居
     const [loading, setLoading] = useState(false);
+    const [agreedPrivacy, setAgreedPrivacy] = useState(false);
 
     const handleSubmit = async () => {
         if (!name.trim()) {
@@ -25,6 +26,10 @@ export default function JoinRoom() {
         }
         if (isCohabiting === null) {
             alert('同居・別居を選択してください');
+            return;
+        }
+        if (!agreedPrivacy) {
+            alert('同意してください');
             return;
         }
 
@@ -147,9 +152,32 @@ export default function JoinRoom() {
                         </FieldBlock>
                     </div>
 
-                    <PrimaryButton onClick={handleSubmit} disabled={loading}>
+                    <div className="mt-8 mb-3">
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={agreedPrivacy}
+                                onChange={(e) => setAgreedPrivacy(e.target.checked)}
+                                className="w-3.5 h-3.5 rounded border border-on-primary bg-transparent"
+                            />
+                            <span className="text-xs text-on-primary/80">
+                                <a href="/privacy" className="underline underline-offset-2">
+                                    プライバシーポリシー
+                                </a>
+                                に同意する
+                            </span>
+                        </label>
+                    </div>
+
+                    <PrimaryButton
+                        onClick={handleSubmit}
+                        disabled={loading || !agreedPrivacy || !name.trim() || isCohabiting === null}
+                    >
                         {loading ? '参加中...' : '家族のズレを確認する'}
                     </PrimaryButton>
+                    <p className="mt-2 text-xs text-[rgba(249,249,249,1)] opacity-70">
+                        住所や本名など、詳しい情報は入力しないでください。
+                    </p>
                 </BlueFormCard>
             </div>
             </div>

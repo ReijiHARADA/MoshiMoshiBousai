@@ -3,6 +3,9 @@ import Home from '../../pages/Home';
 import JoinRoom from '../../pages/JoinRoom';
 import Questions from '../../pages/Questions';
 import Summary from '../../pages/Summary';
+import Privacy from '../../pages/Privacy';
+import Disclaimer from '../../pages/Disclaimer';
+import Contact from '../../pages/Contact';
 import { useThemeColorOnScroll } from '../../hooks/useThemeColorOnScroll';
 
 /** 質問 / サマリーページではフッターを隠す */
@@ -31,6 +34,9 @@ export function MobileShell() {
           <Route path="/join/:roomId" element={<JoinRoom />} />
           <Route path="/room/:roomId/questions" element={<Questions />} />
           <Route path="/room/:roomId/summary" element={<Summary />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
+          <Route path="/contact" element={<Contact />} />
         </Routes>
       </div>
 
@@ -41,17 +47,33 @@ export function MobileShell() {
             paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))',
             zIndex: 20,
           }}
-        >
-          <div className="w-full mx-auto" style={{ maxWidth: '448px' }}>
-            <a
-              href="https://forms.gle/SL6Q5LTbMchyGXvd9"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white text-[13px] underline underline-offset-2"
-            >
-              フィードバックを送る
-            </a>
-            <p className="text-white/50 text-[11px] mt-1">©Reiji HARADA</p>
+          >
+          <div className="w-full mx-auto px-4" style={{ maxWidth: '448px' }}>
+            <div className="flex flex-col items-center justify-center gap-y-[6px] text-[9px]">
+              <a
+                href="https://forms.gle/SL6Q5LTbMchyGXvd9"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/90 underline underline-offset-2 text-[12px]"
+              >
+                お問い合わせ / フィードバックを送る
+              </a>
+              <div className="flex items-center justify-center gap-x-4">
+                <a
+                  href="/privacy"
+                  className="text-white/80 underline underline-offset-2 opacity-80"
+                >
+                  プライバシー
+                </a>
+                <a
+                  href="/disclaimer"
+                  className="text-white/80 underline underline-offset-2 opacity-80"
+                >
+                  利用上の注意
+                </a>
+              </div>
+            </div>
+            <p className="text-white/50 text-[12px] mt-2">©Reiji HARADA</p>
           </div>
         </footer>
       )}
