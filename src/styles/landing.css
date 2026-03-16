@@ -86,7 +86,7 @@
   flex-direction: column;
   align-items: center;
   padding: calc(48px + env(safe-area-inset-top, 0px)) 28px 60px;
-  gap: 28px;
+  gap: 20px;
   background-color: var(--lp-bg);
 }
 
@@ -113,7 +113,7 @@
   background-color: var(--lp-blue);
   color: #fff;
   font-family: var(--lp-font);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1.4;
   padding: 10px 20px;
@@ -132,7 +132,7 @@
   text-align: center;
   color: var(--lp-text-muted);
   font-size: 16px;
-  line-height: 1.8;
+  line-height: 180%;
 }
 
 .lp-hero__description p {
